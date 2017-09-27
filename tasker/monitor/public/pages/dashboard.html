@@ -111,7 +111,10 @@
         <div class="tile">
             <div class="tile is-parent is-12">
                 <article class="tile is-child notification">
-                    <p class="title">Workers</p>
+                    <p class="title">
+                        Workers
+                        <a class="button is-primary is-pulled-right" ng-click="updateWorkers()">Refresh</a>
+                    </p>
                     </br>
                     <p class="subtitle">
                         <input placeholder="search..." id="search" type="text" class="validate input" ng-model="workers_search">

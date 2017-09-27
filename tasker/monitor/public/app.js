@@ -59,6 +59,10 @@ taskerDashboard.controller(
             $scope.workersTableSortBy = "hostname";
             $scope.workersTableSortByReverse = true;
 
+            $scope.updateWorkers = function() {
+                websocket.send("workers");
+            };
+
             websocket.onclose = function(event) {
                 $scope.websocketConnected = false;
             };
@@ -66,7 +70,7 @@ taskerDashboard.controller(
                 $scope.websocketConnected = true;
                 websocket.send("metrics");
                 websocket.send("queues");
-                websocket.send("workers");
+                websocket.send("statistics");
             };
             websocket.onmessage = function(event) {
                 var message = JSON.parse(event.data);
@@ -90,37 +94,17 @@ taskerDashboard.controller(
                         },
                         2000
                     );
-                } else if (message.type === "workers") {
-                    $scope.workers = message.data;
-
-                    var statistics = {};
-
-                    for (var i = 0; i < $scope.workers.length; i++) {
-                        var currentWorker = $scope.workers[i];
-
-                        if (!(currentWorker.name in statistics)) {
-                            statistics[currentWorker.name] = {
-                                "process": 0,
-                                "success": 0,
-                                "retry": 0,
-                                "failure": 0
-                            };
-                        }
-
-                        statistics[currentWorker.name].process += currentWorker.metrics.process;
-                        statistics[currentWorker.name].success += currentWorker.metrics.success;
-                        statistics[currentWorker.name].retry += currentWorker.metrics.retry;
-                        statistics[currentWorker.name].failure += currentWorker.metrics.failure;
-                    }
-
-                    $scope.statistics = statistics;
+                } else if (message.type === "statistics") {
+                    $scope.statistics = message.data;
 
                     $timeout(
                         function() {
-                            websocket.send("workers");
+                            websocket.send("statistics");
                         },
-                        5000
+                        3000
                     );
+                } else if (message.type === "workers") {
+                    $scope.workers = message.data;
                 }
             };
         }
