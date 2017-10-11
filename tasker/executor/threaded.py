@@ -30,6 +30,8 @@ class ThreadedExecutor(
         self,
         task,
     ):
+        raised_exception = None
+
         self.update_current_task(
             task=task,
         )
@@ -42,7 +44,12 @@ class ThreadedExecutor(
                 ctypes.py_object(worker.WorkerSoftTimedout),
             )
         )
-        self.current_timers[threading.get_ident()].start()
+        try:
+            self.current_timers[threading.get_ident()].start()
+        except worker.WorkerSoftTimedout as exception:
+            raised_exception = exception
+
+        return raised_exception
 
     def post_work(
         self,
