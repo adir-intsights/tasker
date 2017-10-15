@@ -238,10 +238,19 @@ class StatisticsWebServer:
                             statistics_dict[worker_name]['retry'] += worker_metrics['retry']
                             statistics_dict[worker_name]['failure'] += worker_metrics['failure']
 
+                    statistics_list = []
+                    for worker_name, metrics in statistics_dict.items():
+                        statistics_list.append(
+                            {
+                                'worker_name': worker_name,
+                                'metrics': metrics,
+                            }
+                        )
+
                     await websocket_obj.send_json(
                         data={
                             'type': 'statistics',
-                            'data': statistics_dict,
+                            'data': statistics_list,
                         },
                     )
                 elif message.data == 'workers':

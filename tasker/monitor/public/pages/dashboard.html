@@ -85,20 +85,20 @@
                     <table id="statistics-table" class="table is-bordered is-stripped is-narrow">
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Process</th>
-                                <th>Success</th>
-                                <th>Retry</th>
-                                <th>Failure</th>
+                                <th style="cursor: pointer;" ng-click="statisticsTableSortBy = 'worker_name'; statisticsTableSortByReverse = !statisticsTableSortByReverse;">Name</th>
+                                <th style="cursor: pointer;" ng-click="statisticsTableSortBy = 'metrics.process'; statisticsTableSortByReverse = !statisticsTableSortByReverse;">Process</th>
+                                <th style="cursor: pointer;" ng-click="statisticsTableSortBy = 'metrics.success'; statisticsTableSortByReverse = !statisticsTableSortByReverse;">Success</th>
+                                <th style="cursor: pointer;" ng-click="statisticsTableSortBy = 'metrics.retry'; statisticsTableSortByReverse = !statisticsTableSortByReverse;">Retry</th>
+                                <th style="cursor: pointer;" ng-click="statisticsTableSortBy = 'metrics.failure'; statisticsTableSortByReverse = !statisticsTableSortByReverse;">Failure</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr ng-repeat="(worker_name, metrics) in statistics">
-                                <td>{{worker_name}}</td>
-                                <td>{{metrics.process.toLocaleString()}}</td>
-                                <td>{{metrics.success.toLocaleString()}}</td>
-                                <td>{{metrics.retry.toLocaleString()}}</td>
-                                <td>{{metrics.failure.toLocaleString()}}</td>
+                            <tr ng-repeat="worker_statistics in statistics | orderBy: statisticsTableSortBy : statisticsTableSortByReverse">
+                                <td>{{worker_statistics.worker_name}}</td>
+                                <td>{{worker_statistics.metrics.process.toLocaleString()}}</td>
+                                <td>{{worker_statistics.metrics.success.toLocaleString()}}</td>
+                                <td>{{worker_statistics.metrics.retry.toLocaleString()}}</td>
+                                <td>{{worker_statistics.metrics.failure.toLocaleString()}}</td>
                             </tr>
                         </tbody>
                     </table>

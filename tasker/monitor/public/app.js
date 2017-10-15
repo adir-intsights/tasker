@@ -52,12 +52,14 @@ taskerDashboard.controller(
                 "retry_per_second": 0,
                 "failure_per_second": 0
             };
-            $scope.statistics = {};
+            $scope.statistics = [];
             $scope.workers = [];
             $scope.queues = {};
 
             $scope.workersTableSortBy = "hostname";
             $scope.workersTableSortByReverse = true;
+            $scope.statisticsTableSortBy = "worker_name";
+            $scope.statisticsTableSortByReverse = true;
 
             $scope.updateWorkers = function() {
                 websocket.send("workers");
