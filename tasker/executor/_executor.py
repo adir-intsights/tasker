@@ -59,9 +59,15 @@ class Executor:
         raised_exception = None
         success_execution = True
 
-        self.pre_work(
+        exception = self.pre_work(
             task=task,
         )
+        if exception:
+            return {
+                'success': False,
+                'returned_value': returned_value,
+                'exception': exception,
+            }
 
         if self.worker_config['profiler']['enabled']:
             work_profiler = profiler.profiler.Profiler()

@@ -54,7 +54,7 @@ class SerialExecutor(
             killer_device = devices.killer.LocalKiller
         else:
             killer_device = devices.killer.RemoteKiller
-        
+
         self.killer = killer_device(
             pid=os.getpid(),
             soft_timeout=self.worker_config['timeouts']['soft_timeout'],
@@ -105,6 +105,8 @@ class SerialExecutor(
         )
         self.killer.reset()
         self.killer.start()
+
+        return None
 
     def post_work(
         self,
