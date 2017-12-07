@@ -106,8 +106,6 @@ class SerialExecutor(
         self.killer.reset()
         self.killer.start()
 
-        return None
-
     def post_work(
         self,
     ):

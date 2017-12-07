@@ -30,26 +30,24 @@ class ThreadedExecutor(
         self,
         task,
     ):
-        raised_exception = None
-
         self.update_current_task(
             task=task,
         )
 
+        interval = self.worker_config['timeouts']['soft_timeout']
+        if interval == 0:
+            interval = None
+
         self.current_timers[threading.get_ident()] = threading.Timer(
-            interval=self.worker_config['timeouts']['soft_timeout'],
+            interval=interval,
             function=ctypes.pythonapi.PyThreadState_SetAsyncExc,
             args=(
                 ctypes.c_long(threading.get_ident()),
                 ctypes.py_object(worker.WorkerSoftTimedout),
             )
         )
-        try:
-            self.current_timers[threading.get_ident()].start()
-        except worker.WorkerSoftTimedout as exception:
-            raised_exception = exception
 
-        return raised_exception
+        self.current_timers[threading.get_ident()].start()
 
     def post_work(
         self,
