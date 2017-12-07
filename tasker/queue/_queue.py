@@ -84,6 +84,7 @@ class Queue:
         self,
         queue_name,
         value,
+        priority,
     ):
         try:
             encoded_value = self.encoder.encode(
@@ -93,6 +94,7 @@ class Queue:
             self._enqueue(
                 queue_name=queue_name,
                 value=encoded_value,
+                priority=priority,
             )
         except Exception as exception:
             self.logger.error(
@@ -105,6 +107,7 @@ class Queue:
         self,
         queue_name,
         value,
+        priority,
     ):
         raise NotImplementedError()
 
@@ -112,6 +115,7 @@ class Queue:
         self,
         queue_name,
         values,
+        priority,
     ):
         try:
             encoded_values = []
@@ -126,6 +130,7 @@ class Queue:
             self._enqueue_bulk(
                 queue_name=queue_name,
                 values=encoded_values,
+                priority=priority,
             )
         except Exception as exception:
             self.logger.error(
@@ -138,6 +143,7 @@ class Queue:
         self,
         queue_name,
         values,
+        priority,
     ):
         raise NotImplementedError()
 

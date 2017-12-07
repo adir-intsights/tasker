@@ -177,6 +177,7 @@ class Worker:
 
     def apply_async_one(
         self,
+        priority='NORMAL',
         *args,
         **kwargs
     ):
@@ -184,6 +185,7 @@ class Worker:
 
         self.task_queue.apply_async_one(
             task=task,
+            priority=priority,
         )
 
         return task
@@ -191,9 +193,11 @@ class Worker:
     def apply_async_many(
         self,
         tasks,
+        priority='NORMAL',
     ):
         return self.task_queue.apply_async_many(
             tasks=tasks,
+            priority=priority,
         )
 
     def get_next_tasks(

@@ -214,6 +214,7 @@ class QueueTestCase(unittest.TestCase):
         test_queue.enqueue(
             queue_name=queue_name,
             value=enqueued_value,
+            priority='NORMAL',
         )
 
         self.assertEqual(test_queue.len(queue_name=queue_name), 1)
@@ -229,6 +230,7 @@ class QueueTestCase(unittest.TestCase):
             test_queue.enqueue(
                 queue_name=queue_name,
                 value=enqueued_value,
+                priority='NORMAL',
             )
         self.assertEqual(test_queue.len(queue_name=queue_name), 10)
         test_queue.flush(
@@ -239,6 +241,7 @@ class QueueTestCase(unittest.TestCase):
         test_queue.enqueue_bulk(
             queue_name=queue_name,
             values=[enqueued_value] * 100,
+            priority='NORMAL',
         )
         self.assertEqual(test_queue.len(queue_name=queue_name), 100)
         values = test_queue.dequeue_bulk(
@@ -290,6 +293,7 @@ class QueueTestCase(unittest.TestCase):
         pickled_queue.enqueue(
             queue_name=queue_name,
             value=enqueued_value,
+            priority='NORMAL',
         )
 
         self.assertEqual(pickled_queue.len(queue_name=queue_name), 1)
@@ -307,6 +311,7 @@ class QueueTestCase(unittest.TestCase):
             pickled_queue.enqueue(
                 queue_name=queue_name,
                 value=enqueued_value,
+                priority='NORMAL',
             )
         self.assertEqual(pickled_queue.len(queue_name=queue_name), 10)
         self.assertEqual(test_queue.len(queue_name=queue_name), 10)
@@ -317,6 +322,7 @@ class QueueTestCase(unittest.TestCase):
         pickled_queue.enqueue_bulk(
             queue_name=queue_name,
             values=[enqueued_value] * 100,
+            priority='NORMAL',
         )
         self.assertEqual(pickled_queue.len(queue_name=queue_name), 100)
         self.assertEqual(test_queue.len(queue_name=queue_name), 100)

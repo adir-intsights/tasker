@@ -35,10 +35,12 @@ class Queue(
         self,
         queue_name,
         value,
+        priority,
     ):
         pushed = self.connector.push(
             key=queue_name,
             value=value,
+            priority=priority,
         )
 
         return pushed
@@ -47,10 +49,12 @@ class Queue(
         self,
         queue_name,
         values,
+        priority,
     ):
         pushed = self.connector.push_bulk(
             key=queue_name,
             values=values,
+            priority=priority,
         )
 
         return pushed

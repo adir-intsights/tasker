@@ -49,6 +49,7 @@ class Connector:
         self,
         key,
         value,
+        priority,
     ):
         raise NotImplementedError()
 
@@ -56,6 +57,7 @@ class Connector:
         self,
         key,
         values,
+        priority,
     ):
         raise NotImplementedError()
 

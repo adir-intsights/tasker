@@ -97,14 +97,22 @@ class Connector(
         self,
         key,
         value,
+        priority,
     ):
+        if priority == 'HIGH':
+            return self.connection.lpush(key, value)
+
         return self.connection.rpush(key, value)
 
     def push_bulk(
         self,
         key,
         values,
+        priority,
     ):
+        if priority == 'HIGH':
+            return self.connection.lpush(key, *values)
+
         return self.connection.rpush(key, *values)
 
     def add_to_set(

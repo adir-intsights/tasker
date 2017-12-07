@@ -12,7 +12,9 @@ from .. import encoder
 class RedisTaskQueueTestCase:
     order_matters = True
 
-    def test_purge_tasks(self):
+    def test_purge_tasks(
+        self,
+    ):
         self.test_task_queue.purge_tasks(
             task_name='test_task',
         )
@@ -25,7 +27,10 @@ class RedisTaskQueueTestCase:
         task = self.test_task_queue.craft_task(
             task_name='test_task',
         )
-        self.test_task_queue.apply_async_one(task)
+        self.test_task_queue.apply_async_one(
+            task=task,
+            priority='NORMAL',
+        )
         self.assertEqual(
             self.test_task_queue.number_of_enqueued_tasks(
                 task_name='test_task',
@@ -42,7 +47,9 @@ class RedisTaskQueueTestCase:
             0,
         )
 
-    def test_number_of_enqueued_tasks(self):
+    def test_number_of_enqueued_tasks(
+        self,
+    ):
         self.test_task_queue.purge_tasks(
             task_name='test_task',
         )
@@ -55,7 +62,10 @@ class RedisTaskQueueTestCase:
         task = self.test_task_queue.craft_task(
             task_name='test_task',
         )
-        self.test_task_queue.apply_async_one(task)
+        self.test_task_queue.apply_async_one(
+            task=task,
+            priority='NORMAL',
+        )
         self.assertEqual(
             self.test_task_queue.number_of_enqueued_tasks(
                 task_name='test_task',
@@ -72,14 +82,20 @@ class RedisTaskQueueTestCase:
             0,
         )
 
-        self.test_task_queue.apply_async_many([task] * 100)
+        self.test_task_queue.apply_async_many(
+            tasks=[task] * 100,
+            priority='NORMAL',
+        )
         self.assertEqual(
             self.test_task_queue.number_of_enqueued_tasks(
                 task_name='test_task',
             ),
             100,
         )
-        self.test_task_queue.apply_async_many([task] * 1000)
+        self.test_task_queue.apply_async_many(
+            tasks=[task] * 1000,
+            priority='NORMAL',
+        )
         self.assertEqual(
             self.test_task_queue.number_of_enqueued_tasks(
                 task_name='test_task',
@@ -96,7 +112,9 @@ class RedisTaskQueueTestCase:
             0,
         )
 
-    def test_craft_task(self):
+    def test_craft_task(
+        self,
+    ):
         task = self.test_task_queue.craft_task(
             task_name='test_task',
             args=(),
@@ -150,7 +168,9 @@ class RedisTaskQueueTestCase:
             }
         )
 
-    def test_report_complete(self):
+    def test_report_complete(
+        self,
+    ):
         self.test_task_queue.purge_tasks(
             task_name='test_task',
         )
@@ -177,7 +197,9 @@ class RedisTaskQueueTestCase:
             )
         )
 
-    def test_wait_task_finished(self):
+    def test_wait_task_finished(
+        self,
+    ):
         self.test_task_queue.purge_tasks(
             task_name='test_task',
         )
@@ -201,7 +223,9 @@ class RedisTaskQueueTestCase:
         after = time.time()
         self.assertTrue(3.0 > after - before > 2.0)
 
-    def test_wait_queue_empty(self):
+    def test_wait_queue_empty(
+        self,
+    ):
         self.test_task_queue.purge_tasks(
             task_name='test_task',
         )
@@ -211,7 +235,10 @@ class RedisTaskQueueTestCase:
             kwargs={},
             report_completion=True,
         )
-        self.test_task_queue.apply_async_one(task)
+        self.test_task_queue.apply_async_one(
+            task=task,
+            priority='NORMAL',
+        )
         purge_tasks_timer = threading.Timer(
             interval=2.0,
             function=self.test_task_queue.purge_tasks,
@@ -226,7 +253,9 @@ class RedisTaskQueueTestCase:
         after = time.time()
         self.assertTrue(3.5 > after - before > 3.0)
 
-    def test_apply_async_one(self):
+    def test_apply_async_one(
+        self,
+    ):
         self.test_task_queue.purge_tasks(
             task_name='test_task',
         )
@@ -250,9 +279,19 @@ class RedisTaskQueueTestCase:
             kwargs={},
             report_completion=True,
         )
-        self.test_task_queue.apply_async_one(task_one)
-        self.test_task_queue.apply_async_one(task_two)
-        self.test_task_queue.apply_async_one(task_three)
+
+        self.test_task_queue.apply_async_one(
+            task=task_one,
+            priority='NORMAL',
+        )
+        self.test_task_queue.apply_async_one(
+            task=task_two,
+            priority='NORMAL',
+        )
+        self.test_task_queue.apply_async_one(
+            task=task_three,
+            priority='NORMAL',
+        )
         task_one_test = self.test_task_queue.queue.dequeue(
             queue_name='test_task',
         )
@@ -310,7 +349,9 @@ class RedisTaskQueueTestCase:
                     )
                 )
 
-    def test_apply_async_many(self):
+    def test_apply_async_many(
+        self,
+    ):
         self.test_task_queue.purge_tasks(
             task_name='test_task_one',
         )
@@ -338,11 +379,12 @@ class RedisTaskQueueTestCase:
             report_completion=True,
         )
         self.test_task_queue.apply_async_many(
-            [
+            tasks=[
                 task_one,
                 task_two,
                 task_three,
-            ]
+            ],
+            priority='NORMAL',
         )
         task_one_test = self.test_task_queue.queue.dequeue(
             queue_name='test_task_one',
@@ -416,7 +458,85 @@ class RedisTaskQueueTestCase:
             )
         )
 
-    def test_get_tasks(self):
+    def test_queue_priority(
+        self,
+    ):
+        self.test_task_queue.purge_tasks(
+            task_name='test_task',
+        )
+        task_NORMAL_priority_1 = self.test_task_queue.craft_task(
+            task_name='test_task',
+            args=(1,),
+            kwargs={
+                'priority': 'NORMAL',
+            },
+            report_completion=False,
+        )
+        task_NORMAL_priority_2 = self.test_task_queue.craft_task(
+            task_name='test_task',
+            args=(1,),
+            kwargs={
+                'priority': 'NORMAL',
+            },
+            report_completion=False,
+        )
+        task_HIGH_priority_1 = self.test_task_queue.craft_task(
+            task_name='test_task',
+            args=(),
+            kwargs={
+                'priority': 'HIGH',
+            },
+            report_completion=True,
+        )
+        task_HIGH_priority_2 = self.test_task_queue.craft_task(
+            task_name='test_task',
+            args=(),
+            kwargs={
+                'priority': 'HIGH',
+            },
+            report_completion=True,
+        )
+        self.test_task_queue.apply_async_one(
+            task=task_NORMAL_priority_1,
+            priority='NORMAL',
+        )
+        self.test_task_queue.apply_async_one(
+            task=task_NORMAL_priority_2,
+            priority='NORMAL',
+        )
+        self.test_task_queue.apply_async_one(
+            task=task_HIGH_priority_1,
+            priority='HIGH',
+        )
+        self.test_task_queue.apply_async_one(
+            task=task_HIGH_priority_2,
+            priority='HIGH',
+        )
+
+        task_one = self.test_task_queue.get_tasks(
+            task_name='test_task',
+            number_of_tasks=1,
+        )
+        task_two = self.test_task_queue.get_tasks(
+            task_name='test_task',
+            number_of_tasks=1,
+        )
+        task_three = self.test_task_queue.get_tasks(
+            task_name='test_task',
+            number_of_tasks=1,
+        )
+        task_four = self.test_task_queue.get_tasks(
+            task_name='test_task',
+            number_of_tasks=1,
+        )
+        self.assertTrue(task_HIGH_priority_1['kwargs']['priority'] == task_one[0]['kwargs']['priority'])
+        self.assertTrue(task_HIGH_priority_2['kwargs']['priority'] == task_two[0]['kwargs']['priority'])
+        self.assertTrue(task_NORMAL_priority_1['kwargs']['priority'] == task_three[0]['kwargs']['priority'])
+        self.assertTrue(task_NORMAL_priority_2['kwargs']['priority'] == task_four[0]['kwargs']['priority'])
+
+    def test_get_tasks(
+        self,
+    ):
         self.test_task_queue.purge_tasks(
             task_name='test_task_one',
         )
@@ -444,11 +564,12 @@ class RedisTaskQueueTestCase:
             report_completion=True,
         )
         self.test_task_queue.apply_async_many(
-            [
+            tasks=[
                 task_one,
                 task_two,
                 task_three,
-            ]
+            ],
+            priority='NORMAL',
         )
         tasks_one = self.test_task_queue.get_tasks(
             task_name='test_task_one',
@@ -462,7 +583,9 @@ class RedisTaskQueueTestCase:
         self.assertTrue(task_two in tasks_one)
         self.assertTrue(task_three in tasks_two)
 
-    def test_retry(self):
+    def test_retry(
+        self,
+    ):
         self.test_task_queue.purge_tasks(
             task_name='test_task',
         )
@@ -473,7 +596,10 @@ class RedisTaskQueueTestCase:
             report_completion=False,
         )
         self.assertEqual(task_one['run_count'], 0)
-        self.test_task_queue.apply_async_one(task_one)
+        self.test_task_queue.apply_async_one(
+            task=task_one,
+            priority='NORMAL',
+        )
         task_one = self.test_task_queue.queue.dequeue(
             queue_name='test_task',
         )
@@ -484,7 +610,9 @@ class RedisTaskQueueTestCase:
         )
         self.assertEqual(task_one['run_count'], 1)
 
-    def test_requeue(self):
+    def test_requeue(
+        self,
+    ):
         self.test_task_queue.purge_tasks(
             task_name='test_task',
         )
@@ -495,7 +623,10 @@ class RedisTaskQueueTestCase:
             report_completion=False,
         )
         self.assertEqual(task_one['run_count'], 0)
-        self.test_task_queue.apply_async_one(task_one)
+        self.test_task_queue.apply_async_one(
+            task=task_one,
+            priority='NORMAL',
+        )
         task_one = self.test_task_queue.queue.dequeue(
             queue_name='test_task',
         )
@@ -513,7 +644,9 @@ class RedisSingleServerTaskQueueTestCase(
 ):
     order_matters = True
 
-    def setUp(self):
+    def setUp(
+        self,
+    ):
         redis_cluster_connector = connector.redis_cluster.Connector(
             nodes=[
                 {
@@ -543,7 +676,9 @@ class RedisClusterSingleServerTaskQueueTestCase(
 ):
     order_matters = True
 
-    def setUp(self):
+    def setUp(
+        self,
+    ):
         redis_cluster_connector = connector.redis_cluster.Connector(
             nodes=[
                 {
@@ -573,7 +708,9 @@ class RedisClusterMultipleServerTaskQueueTestCase(
 ):
     order_matters = False
 
-    def setUp(self):
+    def setUp(
+        self,
+    ):
         redis_cluster_connector = connector.redis_cluster.Connector(
             nodes=[
                 {

@@ -152,11 +152,13 @@ class TaskQueue:
     def apply_async_one(
         self,
         task,
+        priority='NORMAL',
     ):
         try:
             self.queue.enqueue(
                 queue_name=task['name'],
                 value=task,
+                priority=priority,
             )
 
             return True
@@ -172,6 +174,7 @@ class TaskQueue:
     def apply_async_many(
         self,
         tasks,
+        priority='NORMAL',
     ):
         if len(tasks) == 0:
             return True
@@ -188,6 +191,7 @@ class TaskQueue:
                 self.queue.enqueue_bulk(
                     queue_name=task_name,
                     values=tasks,
+                    priority=priority,
                 )
 
             return True
@@ -239,6 +243,7 @@ class TaskQueue:
 
         return self.apply_async_one(
             task=task,
+            priority='NORMAL',
         )
 
     def requeue(
@@ -247,4 +252,5 @@ class TaskQueue:
     ):
         return self.apply_async_one(
             task=task,
+            priority='NORMAL',
         )

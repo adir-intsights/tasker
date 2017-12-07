@@ -202,6 +202,7 @@ class WorkerTestCase:
         self.events_test_worker.purge_tasks()
         self.events_test_worker.apply_async_one(
             action='succeeded',
+            priority='NORMAL'
         )
         self.assertEqual(
             self.events_test_worker.number_of_enqueued_tasks(),
@@ -224,6 +225,7 @@ class WorkerTestCase:
         self.events_test_worker.purge_tasks()
         self.events_test_worker.apply_async_one(
             action='failed',
+            priority='NORMAL'
         )
         self.assertEqual(
             self.events_test_worker.number_of_enqueued_tasks(),
@@ -249,6 +251,7 @@ class WorkerTestCase:
         self.events_test_worker.purge_tasks()
         self.events_test_worker.apply_async_one(
             action='timed_out',
+            priority='NORMAL'
         )
         self.assertEqual(
             self.events_test_worker.number_of_enqueued_tasks(),
@@ -273,6 +276,7 @@ class WorkerTestCase:
         self.events_test_worker.purge_tasks()
         self.events_test_worker.apply_async_one(
             action='retried',
+            priority='NORMAL'
         )
         self.assertEqual(
             self.events_test_worker.number_of_enqueued_tasks(),
@@ -297,6 +301,7 @@ class WorkerTestCase:
         self.events_test_worker.purge_tasks()
         self.events_test_worker.apply_async_one(
             action='requeued',
+            priority='NORMAL'
         )
         self.assertEqual(
             self.events_test_worker.number_of_enqueued_tasks(),
@@ -321,6 +326,7 @@ class WorkerTestCase:
         self.events_test_worker.purge_tasks()
         self.events_test_worker.apply_async_one(
             action='max_retried',
+            priority='NORMAL'
         )
         self.assertEqual(
             self.events_test_worker.number_of_enqueued_tasks(),
@@ -343,6 +349,7 @@ class WorkerTestCase:
         self.events_test_worker.purge_tasks()
         task = self.events_test_worker.apply_async_one(
             action='report_completion',
+            priority='NORMAL'
         )
         self.assertEqual(
             self.events_test_worker.number_of_enqueued_tasks(),

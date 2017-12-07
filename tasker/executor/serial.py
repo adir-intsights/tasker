@@ -76,6 +76,7 @@ class SerialExecutor(
         if self.tasks_to_finish:
             self.worker_task_queue.apply_async_many(
                 tasks=self.tasks_to_finish,
+                priority='NORMAL',
             )
 
         signal.signal(signal.SIGABRT, signal.SIG_DFL)

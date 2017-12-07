@@ -81,10 +81,10 @@ class Connector(
                 name=key,
             )
 
+            self.rotate_connections()
+
             if value:
                 return value
-            else:
-                self.rotate_connections()
 
         return None
 
@@ -105,10 +105,10 @@ class Connector(
 
             value = pipeline.execute()
 
+            self.rotate_connections()
+
             if len(value) != 1:
                 values += value[0]
-            else:
-                self.rotate_connections()
 
                 continue
 
@@ -123,8 +123,12 @@ class Connector(
         self,
         key,
         value,
+        priority,
     ):
-        push_returned_value = self.connections[0].rpush(key, value)
+        if priority == 'HIGH':
+            push_returned_value = self.connections[0].lpush(key, value)
+        else:
+            push_returned_value = self.connections[0].rpush(key, value)
 
         self.rotate_connections()
 
@@ -134,8 +138,12 @@ class Connector(
         self,
         key,
         values,
+        priority,
     ):
-        push_returned_value = self.connections[0].rpush(key, *values)
+        if priority == 'HIGH':
+            push_returned_value = self.connections[0].lpush(key, *values)
+        else:
+            push_returned_value = self.connections[0].rpush(key, *values)
 
         self.rotate_connections()
 
