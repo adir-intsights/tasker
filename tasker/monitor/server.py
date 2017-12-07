@@ -218,6 +218,41 @@ class StatisticsWebServer:
 
                     for redis_connection in redis_connections:
                         redis_connection.close()
+                elif message.data == 'statistics':
+                    statistics_dict = {}
+
+                    workers_dict = self.statistics_obj.workers
+                    for hostname in workers_dict:
+                        for worker_name in workers_dict[hostname]:
+                            if worker_name not in statistics_dict:
+                                statistics_dict[worker_name] = {
+                                    'process': 0,
+                                    'success': 0,
+                                    'retry': 0,
+                                    'failure': 0,
+                                }
+
+                            worker_metrics = workers_dict[hostname][worker_name]
+                            statistics_dict[worker_name]['process'] += worker_metrics['process']
+                            statistics_dict[worker_name]['success'] += worker_metrics['success']
+                            statistics_dict[worker_name]['retry'] += worker_metrics['retry']
+                            statistics_dict[worker_name]['failure'] += worker_metrics['failure']
+
+                    statistics_list = []
+                    for worker_name, metrics in statistics_dict.items():
+                        statistics_list.append(
+                            {
+                                'worker_name': worker_name,
+                                'metrics': metrics,
+                            }
+                        )
+
+                    await websocket_obj.send_json(
+                        data={
+                            'type': 'statistics',
+                            'data': statistics_list,
+                        },
+                    )
                 elif message.data == 'workers':
                     workers_dict = self.statistics_obj.workers
                     workers_list = []

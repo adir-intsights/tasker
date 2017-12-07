@@ -34,7 +34,8 @@ taskerDashboard.controller(
         "$scope",
         "$location",
         "$interval",
-        function dashboardController($scope, $location, $interval) {
+        "$timeout",
+        function dashboardController($scope, $location, $interval, $timeout) {
             var domain = location.hostname + (location.port ? ":" + location.port: "");
             var websocket = new WebSocket("ws://" + domain + "/ws/statistics");
 
@@ -51,12 +52,18 @@ taskerDashboard.controller(
                 "retry_per_second": 0,
                 "failure_per_second": 0
             };
-            $scope.statistics = {};
+            $scope.statistics = [];
             $scope.workers = [];
             $scope.queues = {};
 
             $scope.workersTableSortBy = "hostname";
             $scope.workersTableSortByReverse = true;
+            $scope.statisticsTableSortBy = "worker_name";
+            $scope.statisticsTableSortByReverse = true;
+
+            $scope.updateWorkers = function() {
+                websocket.send("workers");
+            };
 
             websocket.onclose = function(event) {
                 $scope.websocketConnected = false;
@@ -65,7 +72,7 @@ taskerDashboard.controller(
                 $scope.websocketConnected = true;
                 websocket.send("metrics");
                 websocket.send("queues");
-                websocket.send("workers");
+                websocket.send("statistics");
             };
             websocket.onmessage = function(event) {
                 var message = JSON.parse(event.data);
@@ -73,48 +80,35 @@ taskerDashboard.controller(
                 if (message.type === "metrics") {
                     $scope.metrics = message.data.metrics;
                     $scope.rates = message.data.rates;
+
+                    $timeout(
+                        function() {
+                            websocket.send("metrics");
+                        },
+                        1000
+                    );
                 } else if (message.type === "queues") {
                     $scope.queues = message.data;
+
+                    $timeout(
+                        function() {
+                            websocket.send("queues");
+                        },
+                        2000
+                    );
+                } else if (message.type === "statistics") {
+                    $scope.statistics = message.data;
+
+                    $timeout(
+                        function() {
+                            websocket.send("statistics");
+                        },
+                        3000
+                    );
                 } else if (message.type === "workers") {
                     $scope.workers = message.data;
-
-                    var statistics = {};
-
-                    for (var i = 0; i < $scope.workers.length; i++) {
-                        var currentWorker = $scope.workers[i];
-
-                        if (!(currentWorker.name in statistics)) {
-                            statistics[currentWorker.name] = {
-                                "process": 0,
-                                "success": 0,
-                                "retry": 0,
-                                "failure": 0
-                            };
-                        }
-
-                        statistics[currentWorker.name].process += currentWorker.metrics.process;
-                        statistics[currentWorker.name].success += currentWorker.metrics.success;
-                        statistics[currentWorker.name].retry += currentWorker.metrics.retry;
-                        statistics[currentWorker.name].failure += currentWorker.metrics.failure;
-                    }
-
-                    $scope.statistics = statistics;
                 }
             };
-
-            $interval(
-                function() {
-                    websocket.send("metrics");
-                },
-                1000
-            );
-            $interval(
-                function() {
-                    websocket.send("queues");
-                    websocket.send("workers");
-                },
-                2000
-            );
         }
     ]
 );
