@@ -15,7 +15,7 @@ setuptools.setup(
         'psutil',
         'aiohttp',
         'aioredis',
-        'uvloop',
+        'uvloop==0.8.1',
         'requests',
     ],
     packages=setuptools.find_packages(),

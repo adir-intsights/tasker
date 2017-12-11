@@ -320,7 +320,6 @@ class StatisticsServer:
             ),
         )
 
-        self.web_server_future = self.event_loop.run_until_complete(self.statistics_web_server.server)
         self.udp_server_future = self.event_loop.run_until_complete(self.statistics_udp_server)
 
     def close(
