@@ -95,7 +95,10 @@ class SerialExecutor(
             self.execute_task(
                 task=task,
             )
-            self.tasks_to_finish.remove(task)
+            try:
+                self.tasks_to_finish.remove(task)
+            except ValueError:
+                pass
 
     def pre_work(
         self,
