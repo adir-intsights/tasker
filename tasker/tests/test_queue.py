@@ -8,26 +8,12 @@ from .. import queue
 from .. import encoder
 
 
-class QueueTestCase(unittest.TestCase):
-    def setUp(self):
-        self.redis_connector = connector.redis.Connector(
-            host='127.0.0.1',
-            port=6379,
-            password='e082ebf6c7fff3997c4bb1cb64d6bdecd0351fa270402d98d35acceef07c6b97',
-            database=0,
-        )
-
-        self.enqueued_value = {
-            'str': 'string',
-            'date': datetime.datetime.utcnow().timestamp(),
-            'array': [1, 2, 3, 4],
-        }
-
-        self.test_set_value = uuid.uuid4()
-
-    def test_no_compression_queue(self):
+class QueueTestCase:
+    def test_no_compression_queue(
+        self,
+    ):
         test_queue = queue.regular.Queue(
-            connector=self.redis_connector,
+            connector=self.connector,
             encoder=encoder.encoder.Encoder(
                 compressor_name='dummy',
                 serializer_name='pickle',
@@ -45,9 +31,11 @@ class QueueTestCase(unittest.TestCase):
             enqueued_value=self.enqueued_value,
         )
 
-    def test_zlib_queue(self):
+    def test_zlib_queue(
+        self,
+    ):
         test_queue = queue.regular.Queue(
-            connector=self.redis_connector,
+            connector=self.connector,
             encoder=encoder.encoder.Encoder(
                 compressor_name='zlib',
                 serializer_name='pickle',
@@ -65,9 +53,11 @@ class QueueTestCase(unittest.TestCase):
             enqueued_value=self.enqueued_value,
         )
 
-    def test_gzip_queue(self):
+    def test_gzip_queue(
+        self,
+    ):
         test_queue = queue.regular.Queue(
-            connector=self.redis_connector,
+            connector=self.connector,
             encoder=encoder.encoder.Encoder(
                 compressor_name='gzip',
                 serializer_name='pickle',
@@ -85,9 +75,11 @@ class QueueTestCase(unittest.TestCase):
             enqueued_value=self.enqueued_value,
         )
 
-    def test_bzip2_queue(self):
+    def test_bzip2_queue(
+        self,
+    ):
         test_queue = queue.regular.Queue(
-            connector=self.redis_connector,
+            connector=self.connector,
             encoder=encoder.encoder.Encoder(
                 compressor_name='bzip2',
                 serializer_name='pickle',
@@ -105,9 +97,11 @@ class QueueTestCase(unittest.TestCase):
             enqueued_value=self.enqueued_value,
         )
 
-    def test_lzma_queue(self):
+    def test_lzma_queue(
+        self,
+    ):
         test_queue = queue.regular.Queue(
-            connector=self.redis_connector,
+            connector=self.connector,
             encoder=encoder.encoder.Encoder(
                 compressor_name='lzma',
                 serializer_name='pickle',
@@ -125,9 +119,11 @@ class QueueTestCase(unittest.TestCase):
             enqueued_value=self.enqueued_value,
         )
 
-    def test_pickle_queue(self):
+    def test_pickle_queue(
+        self,
+    ):
         test_queue = queue.regular.Queue(
-            connector=self.redis_connector,
+            connector=self.connector,
             encoder=encoder.encoder.Encoder(
                 compressor_name='dummy',
                 serializer_name='pickle',
@@ -145,9 +141,11 @@ class QueueTestCase(unittest.TestCase):
             enqueued_value=self.enqueued_value,
         )
 
-    def test_msgpack_queue(self):
+    def test_msgpack_queue(
+        self,
+    ):
         test_queue = queue.regular.Queue(
-            connector=self.redis_connector,
+            connector=self.connector,
             encoder=encoder.encoder.Encoder(
                 compressor_name='dummy',
                 serializer_name='msgpack',
@@ -165,9 +163,11 @@ class QueueTestCase(unittest.TestCase):
             enqueued_value=self.enqueued_value,
         )
 
-    def test_msgpack_compressed_queue(self):
+    def test_msgpack_compressed_queue(
+        self,
+    ):
         test_queue = queue.regular.Queue(
-            connector=self.redis_connector,
+            connector=self.connector,
             encoder=encoder.encoder.Encoder(
                 compressor_name='zlib',
                 serializer_name='msgpack',
@@ -185,9 +185,11 @@ class QueueTestCase(unittest.TestCase):
             enqueued_value=self.enqueued_value,
         )
 
-    def test_pickle_compressed_queue(self):
+    def test_pickle_compressed_queue(
+        self,
+    ):
         test_queue = queue.regular.Queue(
-            connector=self.redis_connector,
+            connector=self.connector,
             encoder=encoder.encoder.Encoder(
                 compressor_name='zlib',
                 serializer_name='pickle',
@@ -205,7 +207,12 @@ class QueueTestCase(unittest.TestCase):
             enqueued_value=self.enqueued_value,
         )
 
-    def queue_functionality(self, queue_name, test_queue, enqueued_value):
+    def queue_functionality(
+        self,
+        queue_name,
+        test_queue,
+        enqueued_value,
+    ):
         test_queue.flush(
             queue_name=queue_name,
         )
@@ -281,7 +288,12 @@ class QueueTestCase(unittest.TestCase):
         )
         self.assertFalse(removed)
 
-    def queue_pickleability(self, queue_name, test_queue, enqueued_value):
+    def queue_pickleability(
+        self,
+        queue_name,
+        test_queue,
+        enqueued_value,
+    ):
         test_queue.flush(
             queue_name=queue_name,
         )
@@ -362,3 +374,79 @@ class QueueTestCase(unittest.TestCase):
             value=self.test_set_value,
         )
         self.assertFalse(removed)
+
+
+class SingleMongoStorageTestCase(
+    QueueTestCase,
+    unittest.TestCase,
+):
+    def setUp(
+        self,
+    ):
+        self.connector = connector.mongo.Connector(
+            mongodb_uri='mongodb://localhost:27030/',
+        )
+
+        self.enqueued_value = {
+            'str': 'string',
+            'date': datetime.datetime.utcnow().timestamp(),
+            'array': [1, 2, 3, 4],
+        }
+
+        self.test_set_value = uuid.uuid4()
+
+
+class SingleRedisStorageTestCase(
+    QueueTestCase,
+    unittest.TestCase,
+):
+    def setUp(
+        self,
+    ):
+        self.connector = connector.redis.Connector(
+            host='127.0.0.1',
+            port=6379,
+            password='e082ebf6c7fff3997c4bb1cb64d6bdecd0351fa270402d98d35acceef07c6b97',
+            database=0,
+        )
+
+        self.enqueued_value = {
+            'str': 'string',
+            'date': datetime.datetime.utcnow().timestamp(),
+            'array': [1, 2, 3, 4],
+        }
+
+        self.test_set_value = uuid.uuid4()
+
+
+class RedisClusterStorageTestCase(
+    QueueTestCase,
+    unittest.TestCase,
+):
+    def setUp(
+        self,
+    ):
+        self.connector = connector.redis_cluster.Connector(
+            nodes=[
+                {
+                    'host': '127.0.0.1',
+                    'port': 6379,
+                    'password': 'e082ebf6c7fff3997c4bb1cb64d6bdecd0351fa270402d98d35acceef07c6b97',
+                    'database': 0,
+                },
+                {
+                    'host': '127.0.0.1',
+                    'port': 6380,
+                    'password': 'e082ebf6c7fff3997c4bb1cb64d6bdecd0351fa270402d98d35acceef07c6b97',
+                    'database': 0,
+                },
+            ]
+        )
+
+        self.enqueued_value = {
+            'str': 'string',
+            'date': datetime.datetime.utcnow().timestamp(),
+            'array': [1, 2, 3, 4],
+        }
+
+        self.test_set_value = uuid.uuid4()

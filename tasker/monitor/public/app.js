@@ -54,12 +54,14 @@ taskerDashboard.controller(
             };
             $scope.statistics = [];
             $scope.workers = [];
-            $scope.queues = {};
+            $scope.queues = [];
 
             $scope.workersTableSortBy = "hostname";
             $scope.workersTableSortByReverse = true;
             $scope.statisticsTableSortBy = "worker_name";
             $scope.statisticsTableSortByReverse = true;
+            $scope.queuesTableSortBy = "queue_name";
+            $scope.queuesTableSortByReverse = true;
 
             $scope.updateWorkers = function() {
                 websocket.send("workers");
@@ -88,7 +90,18 @@ taskerDashboard.controller(
                         1000
                     );
                 } else if (message.type === "queues") {
-                    $scope.queues = message.data;
+                    var queues = [];
+
+                    for (var key in message.data) {
+                        queues.push(
+                            {
+                                'queue_name': key,
+                                'queue_count': message.data[key]
+                            }
+                        );
+                    }
+
+                    $scope.queues = queues;
 
                     $timeout(
                         function() {

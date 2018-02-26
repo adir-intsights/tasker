@@ -3,11 +3,17 @@ import unittest
 from .. import encoder
 
 
-class EncoderTestCase(unittest.TestCase):
-    def setUp(self):
+class EncoderTestCase(
+    unittest.TestCase,
+):
+    def setUp(
+        self,
+    ):
         pass
 
-    def test_compressors(self):
+    def test_compressors(
+        self,
+    ):
         data = b'a' * 1000
 
         dummy = encoder.compressor.dummy.Compressor()
@@ -31,7 +37,9 @@ class EncoderTestCase(unittest.TestCase):
             decompressed = compressor.decompress(compressed)
             self.assertEqual(decompressed, data)
 
-    def test_serializers(self):
+    def test_serializers(
+        self,
+    ):
         data = {
             'a': 1,
             'b': [1, 2, 3, 4],
@@ -54,7 +62,9 @@ class EncoderTestCase(unittest.TestCase):
             deserialized = serializer.unserialize(serialized)
             self.assertEqual(deserialized, data)
 
-    def test_encoder(self):
+    def test_encoder(
+        self,
+    ):
         data = {
             'a': 1,
             'b': [1, 2, 3, 4],

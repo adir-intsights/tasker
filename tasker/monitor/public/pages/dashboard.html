@@ -66,14 +66,14 @@
                     <table id="queues-table" class="table is-bordered is-stripped is-narrow">
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Count</th>
+                                <th style="cursor: pointer;" ng-click="queuesTableSortBy = 'queue_name'; queuesTableSortByReverse = !queuesTableSortByReverse;">Name</th>
+                                <th style="cursor: pointer;" ng-click="queuesTableSortBy = 'queue_count'; queuesTableSortByReverse = !queuesTableSortByReverse;">Count</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr ng-repeat="(queue_name, queue_count) in queues">
-                                <td>{{queue_name}}</td>
-                                <td>{{queue_count.toLocaleString()}}</td>
+                            <tr ng-repeat="queue in queues | orderBy: queuesTableSortBy : queuesTableSortByReverse">
+                                <td>{{queue.queue_name}}</td>
+                                <td>{{queue.queue_count.toLocaleString()}}</td>
                             </tr>
                         </tbody>
                     </table>

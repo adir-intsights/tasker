@@ -8,7 +8,9 @@ from .. import encoder
 
 
 class StorageTestCase:
-    def test_lock_key(self):
+    def test_lock_key(
+        self,
+    ):
         self.storage.release_lock_key(
             name=self.test_key,
         )
@@ -91,7 +93,9 @@ class StorageTestCase:
         )
         self.assertFalse(acquired)
 
-    def test_functions(self):
+    def test_functions(
+        self,
+    ):
         self.storage.release_lock_key(
             name=self.test_key,
         )
@@ -128,11 +132,37 @@ class StorageTestCase:
         )
 
 
+class SingleMongoStorageTestCase(
+    StorageTestCase,
+    unittest.TestCase,
+):
+    def setUp(
+        self,
+    ):
+        self.mongo_connector = connector.mongo.Connector(
+            mongodb_uri='mongodb://localhost:27030/',
+        )
+
+        self.storage = storage.storage.Storage(
+            connector=self.mongo_connector,
+            encoder=encoder.encoder.Encoder(
+                compressor_name='dummy',
+                serializer_name='pickle',
+            ),
+        )
+        self.test_key = 'test_key'
+        self.test_lock_key = '_storage_{key_name}_lock'.format(
+            key_name=self.test_key,
+        )
+
+
 class SingleRedisStorageTestCase(
     StorageTestCase,
     unittest.TestCase,
 ):
-    def setUp(self):
+    def setUp(
+        self,
+    ):
         self.redis_connector = connector.redis.Connector(
             host='127.0.0.1',
             port=6379,
@@ -157,7 +187,9 @@ class RedisClusterStorageTestCase(
     StorageTestCase,
     unittest.TestCase,
 ):
-    def setUp(self):
+    def setUp(
+        self,
+    ):
         self.redis_connector = connector.redis_cluster.Connector(
             nodes=[
                 {

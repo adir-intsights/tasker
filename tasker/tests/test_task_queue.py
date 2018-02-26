@@ -738,3 +738,652 @@ class RedisClusterMultipleServerTaskQueueTestCase(
         self.test_task_queue = task_queue.TaskQueue(
             queue=test_queue,
         )
+
+
+class MongoTaskQueueTestCase(
+    unittest.TestCase,
+):
+    order_matters = True
+
+    def setUp(
+        self,
+    ):
+        mongo_connector = connector.mongo.Connector(
+            mongodb_uri='mongodb://localhost:27030/',
+        )
+
+        test_queue = queue.regular.Queue(
+            connector=mongo_connector,
+            encoder=encoder.encoder.Encoder(
+                compressor_name='dummy',
+                serializer_name='pickle',
+            ),
+        )
+        self.test_task_queue = task_queue.TaskQueue(
+            queue=test_queue,
+        )
+
+    def test_purge_tasks(
+        self,
+    ):
+        self.test_task_queue.purge_tasks(
+            task_name='test_task',
+        )
+        self.assertEqual(
+            self.test_task_queue.number_of_enqueued_tasks(
+                task_name='test_task',
+            ),
+            0,
+        )
+        task = self.test_task_queue.craft_task(
+            task_name='test_task',
+        )
+        self.test_task_queue.apply_async_one(
+            task=task,
+            priority='NORMAL',
+        )
+        self.assertEqual(
+            self.test_task_queue.number_of_enqueued_tasks(
+                task_name='test_task',
+            ),
+            1,
+        )
+        self.test_task_queue.purge_tasks(
+            task_name='test_task',
+        )
+        self.assertEqual(
+            self.test_task_queue.number_of_enqueued_tasks(
+                task_name='test_task',
+            ),
+            0,
+        )
+
+    def test_number_of_enqueued_tasks(
+        self,
+    ):
+        self.test_task_queue.purge_tasks(
+            task_name='test_task',
+        )
+        self.assertEqual(
+            self.test_task_queue.number_of_enqueued_tasks(
+                task_name='test_task',
+            ),
+            0,
+        )
+        task = self.test_task_queue.craft_task(
+            task_name='test_task',
+        )
+        self.test_task_queue.apply_async_one(
+            task=task,
+            priority='NORMAL',
+        )
+        self.assertEqual(
+            self.test_task_queue.number_of_enqueued_tasks(
+                task_name='test_task',
+            ),
+            1,
+        )
+        self.test_task_queue.purge_tasks(
+            task_name='test_task',
+        )
+        self.assertEqual(
+            self.test_task_queue.number_of_enqueued_tasks(
+                task_name='test_task',
+            ),
+            0,
+        )
+
+        self.test_task_queue.apply_async_many(
+            tasks=[task] * 100,
+            priority='NORMAL',
+        )
+        self.assertEqual(
+            self.test_task_queue.number_of_enqueued_tasks(
+                task_name='test_task',
+            ),
+            100,
+        )
+        self.test_task_queue.apply_async_many(
+            tasks=[task] * 1000,
+            priority='NORMAL',
+        )
+        self.assertEqual(
+            self.test_task_queue.number_of_enqueued_tasks(
+                task_name='test_task',
+            ),
+            1100,
+        )
+        self.test_task_queue.purge_tasks(
+            task_name='test_task',
+        )
+        self.assertEqual(
+            self.test_task_queue.number_of_enqueued_tasks(
+                task_name='test_task',
+            ),
+            0,
+        )
+
+    def test_craft_task(
+        self,
+    ):
+        task = self.test_task_queue.craft_task(
+            task_name='test_task',
+            args=(),
+            kwargs={},
+            report_completion=False,
+        )
+        current_date = datetime.datetime.utcnow().timestamp()
+        date = task.pop('date')
+        self.assertAlmostEqual(
+            date / (10 ** 8),
+            current_date / (10 ** 8),
+        )
+        self.assertEqual(
+            task,
+            {
+                'name': 'test_task',
+                'args': (),
+                'kwargs': {},
+                'run_count': 0,
+                'completion_key': None,
+            }
+        )
+
+        task = self.test_task_queue.craft_task(
+            task_name='test_task',
+            args=(1, 2, 3),
+            kwargs={
+                'a': 1,
+                'b': 2,
+            },
+            report_completion=True,
+        )
+        current_date = datetime.datetime.utcnow().timestamp()
+        date = task.pop('date')
+        self.assertAlmostEqual(
+            date / (10 ** 8),
+            current_date / (10 ** 8),
+        )
+        completion_key = task.pop('completion_key')
+        self.assertNotEqual(completion_key, None)
+        self.assertEqual(
+            task,
+            {
+                'name': 'test_task',
+                'args': (1, 2, 3),
+                'kwargs': {
+                    'a': 1,
+                    'b': 2,
+                },
+                'run_count': 0,
+            }
+        )
+
+    def test_report_complete(
+        self,
+    ):
+        self.test_task_queue.purge_tasks(
+            task_name='test_task',
+        )
+        task = self.test_task_queue.craft_task(
+            task_name='test_task',
+            args=(),
+            kwargs={},
+            report_completion=True,
+        )
+        completion_key = task['completion_key']
+        self.assertTrue(
+            self.test_task_queue.queue.has_result(
+                queue_name='test_task',
+                value=completion_key,
+            )
+        )
+        self.test_task_queue.report_complete(
+            task=task,
+        )
+        self.assertFalse(
+            self.test_task_queue.queue.has_result(
+                queue_name='test_task',
+                value=completion_key,
+            )
+        )
+
+    def test_wait_task_finished(
+        self,
+    ):
+        self.test_task_queue.purge_tasks(
+            task_name='test_task',
+        )
+        task = self.test_task_queue.craft_task(
+            task_name='test_task',
+            args=(),
+            kwargs={},
+            report_completion=True,
+        )
+        report_complete_timer = threading.Timer(
+            interval=2.0,
+            function=self.test_task_queue.report_complete,
+            args=(task,),
+        )
+        report_complete_timer.start()
+
+        before = time.time()
+        self.test_task_queue.wait_task_finished(
+            task=task,
+        )
+        after = time.time()
+        self.assertTrue(3.0 > after - before > 2.0)
+
+    def test_wait_queue_empty(
+        self,
+    ):
+        self.test_task_queue.purge_tasks(
+            task_name='test_task',
+        )
+        task = self.test_task_queue.craft_task(
+            task_name='test_task',
+            args=(),
+            kwargs={},
+            report_completion=True,
+        )
+        self.test_task_queue.apply_async_one(
+            task=task,
+            priority='NORMAL',
+        )
+        purge_tasks_timer = threading.Timer(
+            interval=2.0,
+            function=self.test_task_queue.purge_tasks,
+            args=('test_task',),
+        )
+        purge_tasks_timer.start()
+
+        before = time.time()
+        self.test_task_queue.wait_queue_empty(
+            task_name='test_task',
+        )
+        after = time.time()
+        self.assertTrue(3.5 > after - before > 3.0)
+
+    def test_apply_async_one(
+        self,
+    ):
+        self.test_task_queue.purge_tasks(
+            task_name='test_task',
+        )
+        task_one = self.test_task_queue.craft_task(
+            task_name='test_task',
+            args=(1,),
+            kwargs={},
+            report_completion=False,
+        )
+        task_two = self.test_task_queue.craft_task(
+            task_name='test_task',
+            args=(),
+            kwargs={
+                'a': 1,
+            },
+            report_completion=True,
+        )
+        task_three = self.test_task_queue.craft_task(
+            task_name='test_task',
+            args=(),
+            kwargs={},
+            report_completion=True,
+        )
+
+        self.test_task_queue.apply_async_one(
+            task=task_one,
+            priority='NORMAL',
+        )
+        self.test_task_queue.apply_async_one(
+            task=task_two,
+            priority='NORMAL',
+        )
+        self.test_task_queue.apply_async_one(
+            task=task_three,
+            priority='NORMAL',
+        )
+        task_one_test = self.test_task_queue.queue.dequeue(
+            queue_name='test_task',
+        )
+        task_two_test = self.test_task_queue.queue.dequeue(
+            queue_name='test_task',
+        )
+        task_three_test = self.test_task_queue.queue.dequeue(
+            queue_name='test_task',
+        )
+        if self.order_matters:
+            self.assertEqual(task_one, task_one_test)
+            self.assertEqual(task_two, task_two_test)
+            self.assertEqual(task_three, task_three_test)
+        else:
+            self.assertIn(
+                task_one,
+                [task_one_test, task_two_test, task_three_test],
+            )
+            self.assertIn(
+                task_two,
+                [task_one_test, task_two_test, task_three_test],
+            )
+            self.assertIn(
+                task_three,
+                [task_one_test, task_two_test, task_three_test],
+            )
+
+        if self.order_matters:
+            self.assertTrue(
+                self.test_task_queue.queue.has_result(
+                    queue_name='test_task',
+                    value=task_two['completion_key'],
+                )
+            )
+            self.assertTrue(
+                self.test_task_queue.queue.has_result(
+                    queue_name='test_task',
+                    value=task_three['completion_key'],
+                )
+            )
+        else:
+            tasks_to_wait = [
+                task_to_wait
+                for task_to_wait in [task_one_test, task_two_test, task_three_test]
+                if task_to_wait['completion_key'] is not None
+            ]
+
+            self.assertEqual(len(tasks_to_wait), 2)
+
+            for task_to_wait in tasks_to_wait:
+                self.assertTrue(
+                    self.test_task_queue.queue.has_result(
+                        queue_name='test_task',
+                        value=task_to_wait['completion_key'],
+                    )
+                )
+
+    def test_apply_async_many(
+        self,
+    ):
+        self.test_task_queue.purge_tasks(
+            task_name='test_task_one',
+        )
+        self.test_task_queue.purge_tasks(
+            task_name='test_task_two',
+        )
+        task_one = self.test_task_queue.craft_task(
+            task_name='test_task_one',
+            args=(1,),
+            kwargs={},
+            report_completion=False,
+        )
+        task_two = self.test_task_queue.craft_task(
+            task_name='test_task_one',
+            args=(),
+            kwargs={
+                'a': 1,
+            },
+            report_completion=True,
+        )
+        task_three = self.test_task_queue.craft_task(
+            task_name='test_task_two',
+            args=(),
+            kwargs={},
+            report_completion=True,
+        )
+        self.test_task_queue.apply_async_many(
+            tasks=[
+                task_one,
+                task_two,
+                task_three,
+            ],
+            priority='NORMAL',
+        )
+        task_one_test = self.test_task_queue.queue.dequeue(
+            queue_name='test_task_one',
+        )
+        task_two_test = self.test_task_queue.queue.dequeue(
+            queue_name='test_task_one',
+        )
+        task_three_test = self.test_task_queue.queue.dequeue(
+            queue_name='test_task_two',
+        )
+
+        if self.order_matters:
+            self.assertEqual(task_one, task_one_test)
+            self.assertEqual(task_two, task_two_test)
+            self.assertEqual(task_three, task_three_test)
+        else:
+            self.assertIn(
+                task_one,
+                [task_one_test, task_two_test],
+            )
+            self.assertIn(
+                task_two,
+                [task_one_test, task_two_test],
+            )
+            self.assertEqual(task_three, task_three_test)
+
+        if self.order_matters:
+            self.assertTrue(
+                self.test_task_queue.queue.has_result(
+                    queue_name='test_task_one',
+                    value=task_two['completion_key'],
+                )
+            )
+            self.assertTrue(
+                self.test_task_queue.queue.has_result(
+                    queue_name='test_task_two',
+                    value=task_three['completion_key'],
+                )
+            )
+        else:
+            tasks_to_wait = [
+                task_to_wait
+                for task_to_wait in [task_one_test, task_two_test, task_three_test]
+                if task_to_wait['completion_key'] is not None
+            ]
+
+            self.assertEqual(len(tasks_to_wait), 2)
+
+            for task_to_wait in tasks_to_wait:
+                self.assertTrue(
+                    self.test_task_queue.queue.has_result(
+                        queue_name=task_to_wait['name'],
+                        value=task_to_wait['completion_key'],
+                    )
+                )
+
+        self.assertEqual(task_one, task_one_test)
+        self.assertEqual(task_two, task_two_test)
+        self.assertEqual(task_three, task_three_test)
+
+        self.assertTrue(
+            self.test_task_queue.queue.has_result(
+                queue_name='test_task_one',
+                value=task_two['completion_key'],
+            )
+        )
+        self.assertTrue(
+            self.test_task_queue.queue.has_result(
+                queue_name='test_task_two',
+                value=task_three['completion_key'],
+            )
+        )
+
+    def test_queue_priority(
+        self,
+    ):
+        self.test_task_queue.purge_tasks(
+            task_name='test_task',
+        )
+        task_NORMAL_priority_1 = self.test_task_queue.craft_task(
+            task_name='test_task',
+            args=(1,),
+            kwargs={
+                'priority': 'NORMAL',
+            },
+            report_completion=False,
+        )
+        task_NORMAL_priority_2 = self.test_task_queue.craft_task(
+            task_name='test_task',
+            args=(1,),
+            kwargs={
+                'priority': 'NORMAL',
+            },
+            report_completion=False,
+        )
+        task_HIGH_priority_1 = self.test_task_queue.craft_task(
+            task_name='test_task',
+            args=(),
+            kwargs={
+                'priority': 'HIGH',
+            },
+            report_completion=True,
+        )
+        task_HIGH_priority_2 = self.test_task_queue.craft_task(
+            task_name='test_task',
+            args=(),
+            kwargs={
+                'priority': 'HIGH',
+            },
+            report_completion=True,
+        )
+        self.test_task_queue.apply_async_one(
+            task=task_NORMAL_priority_1,
+            priority='NORMAL',
+        )
+        self.test_task_queue.apply_async_one(
+            task=task_NORMAL_priority_2,
+            priority='NORMAL',
+        )
+        self.test_task_queue.apply_async_one(
+            task=task_HIGH_priority_1,
+            priority='HIGH',
+        )
+        self.test_task_queue.apply_async_one(
+            task=task_HIGH_priority_2,
+            priority='HIGH',
+        )
+
+        task_one = self.test_task_queue.get_tasks(
+            task_name='test_task',
+            number_of_tasks=1,
+        )
+        task_two = self.test_task_queue.get_tasks(
+            task_name='test_task',
+            number_of_tasks=1,
+        )
+        task_three = self.test_task_queue.get_tasks(
+            task_name='test_task',
+            number_of_tasks=1,
+        )
+        task_four = self.test_task_queue.get_tasks(
+            task_name='test_task',
+            number_of_tasks=1,
+        )
+        self.assertTrue(task_HIGH_priority_1['kwargs']['priority'] == task_one[0]['kwargs']['priority'])
+        self.assertTrue(task_HIGH_priority_2['kwargs']['priority'] == task_two[0]['kwargs']['priority'])
+        self.assertTrue(task_NORMAL_priority_1['kwargs']['priority'] == task_three[0]['kwargs']['priority'])
+        self.assertTrue(task_NORMAL_priority_2['kwargs']['priority'] == task_four[0]['kwargs']['priority'])
+
+    def test_get_tasks(
+        self,
+    ):
+        self.test_task_queue.purge_tasks(
+            task_name='test_task_one',
+        )
+        self.test_task_queue.purge_tasks(
+            task_name='test_task_two',
+        )
+        task_one = self.test_task_queue.craft_task(
+            task_name='test_task_one',
+            args=(1,),
+            kwargs={},
+            report_completion=False,
+        )
+        task_two = self.test_task_queue.craft_task(
+            task_name='test_task_one',
+            args=(),
+            kwargs={
+                'a': 1,
+            },
+            report_completion=True,
+        )
+        task_three = self.test_task_queue.craft_task(
+            task_name='test_task_two',
+            args=(),
+            kwargs={},
+            report_completion=True,
+        )
+        self.test_task_queue.apply_async_many(
+            tasks=[
+                task_one,
+                task_two,
+                task_three,
+            ],
+            priority='NORMAL',
+        )
+        tasks_one = self.test_task_queue.get_tasks(
+            task_name='test_task_one',
+            number_of_tasks=3,
+        )
+        tasks_two = self.test_task_queue.get_tasks(
+            task_name='test_task_two',
+            number_of_tasks=1,
+        )
+        self.assertTrue(task_one in tasks_one)
+        self.assertTrue(task_two in tasks_one)
+        self.assertTrue(task_three in tasks_two)
+
+    def test_retry(
+        self,
+    ):
+        self.test_task_queue.purge_tasks(
+            task_name='test_task',
+        )
+        task_one = self.test_task_queue.craft_task(
+            task_name='test_task',
+            args=(1,),
+            kwargs={},
+            report_completion=False,
+        )
+        self.assertEqual(task_one['run_count'], 0)
+        self.test_task_queue.apply_async_one(
+            task=task_one,
+            priority='NORMAL',
+        )
+        task_one = self.test_task_queue.queue.dequeue(
+            queue_name='test_task',
+        )
+
+        self.test_task_queue.retry(task_one)
+        task_one = self.test_task_queue.queue.dequeue(
+            queue_name='test_task',
+        )
+        self.assertEqual(task_one['run_count'], 1)
+
+    def test_requeue(
+        self,
+    ):
+        self.test_task_queue.purge_tasks(
+            task_name='test_task',
+        )
+        task_one = self.test_task_queue.craft_task(
+            task_name='test_task',
+            args=(1,),
+            kwargs={},
+            report_completion=False,
+        )
+        self.assertEqual(task_one['run_count'], 0)
+        self.test_task_queue.apply_async_one(
+            task=task_one,
+            priority='NORMAL',
+        )
+        task_one = self.test_task_queue.queue.dequeue(
+            queue_name='test_task',
+        )
+
+        self.test_task_queue.requeue(task_one)
+        task_one = self.test_task_queue.queue.dequeue(
+            queue_name='test_task',
+        )
+        self.assertEqual(task_one['run_count'], 0)
