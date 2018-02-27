@@ -4,5 +4,6 @@ msgpack-python
 psutil
 aiohttp
 aioredis
-uvloop
+uvloop==0.8.1
 requests
+pymongo
