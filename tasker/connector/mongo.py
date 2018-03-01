@@ -46,7 +46,11 @@ class Connector(
                 ),
             ],
             background=True,
-            unique=True,
+        )
+        self.connection.tasker.results.create_index(
+            keys='expiration_date',
+            expireAfterSeconds=0,
+            background=True,
         )
         self.connection.tasker.sets.create_index(
             keys=[
@@ -76,33 +80,32 @@ class Connector(
                 seconds=ttl / 1000,
             )
 
-        find_one_result = self.connection.tasker.results.find_one(
+        update_one_result = self.connection.tasker.results.update_one(
             filter={
                 'key': key,
                 'expiration_date': {
                     '$gt': datetime.datetime.utcnow(),
                 }
             },
+            update={
+                '$setOnInsert': {
+                    'key': key,
+                    'expiration_date': expiration_date,
+                },
+                '$set': {
+                    'value': value,
+                },
+            },
+            upsert=True,
         )
 
-        if find_one_result is None:
-            self.connection.tasker.results.update_one(
-                filter={
-                    'key': key,
-                },
-                update={
-                    '$set': {
-                        'key': key,
-                        'value': value,
-                        'expiration_date': expiration_date,
-                    },
-                },
-                upsert=True,
-            )
-
+        if update_one_result.upserted_id is not None:
             return True
-        else:
+
+        if update_one_result.modified_count == 0:
             return False
+        else:
+            return True
 
     def key_get(
         self,
@@ -111,18 +114,14 @@ class Connector(
         document = self.connection.tasker.results.find_one(
             filter={
                 'key': key,
+                'expiration_date': {
+                    '$gt': datetime.datetime.utcnow(),
+                },
             },
         )
 
         if document:
-            if document['expiration_date'] > datetime.datetime.utcnow():
-                return document['value']
-            else:
-                self.key_del(
-                    keys=[key],
-                )
-
-                return None
+            return document['value']
         else:
             return None
 
@@ -130,12 +129,13 @@ class Connector(
         self,
         keys,
     ):
-        for key in keys:
-            self.connection.tasker.results.delete_one(
-                filter={
-                    'key': key,
+        self.connection.tasker.results.delete_many(
+            filter={
+                'key': {
+                    '$in': keys,
                 },
-            )
+            },
+        )
 
     def pop(
         self,
