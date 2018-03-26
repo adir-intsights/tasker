@@ -15,7 +15,8 @@ addons:
     - libsnappy-dev
     - zlib1g-dev
     - libbz2-dev
-    - libzstd-dev
+    - liblz4-dev
+    - git
 
 before_install:
 - git clone --depth 1 https://github.com/facebook/rocksdb.git
