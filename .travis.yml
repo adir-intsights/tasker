@@ -1,29 +1,15 @@
 sudo: required
 
 language: python
-
 python:
   - "3.6"
+install:
+  - "pip install -r requirements.txt"
 
 services:
   - docker
 
-addons:
-  apt:
-    packages:
-    - libgflags-dev
-    - libsnappy-dev
-    - zlib1g-dev
-    - libbz2-dev
-    - liblz4-dev
-    - git
-
 before_install:
-- git clone --depth 1 https://github.com/facebook/rocksdb.git
-- cd rocksdb/
-- make all
-- cd ../
-- pip install -r requirements.txt
 - docker pull redis
 - docker pull mongo
 - docker run --detach --publish=6379:6379 redis bash -c "redis-server --maxclients 65535 --save '' --tcp-backlog 65535 --tcp-keepalive 10 --protected-mode no --bind 0.0.0.0 --requirepass e082ebf6c7fff3997c4bb1cb64d6bdecd0351fa270402d98d35acceef07c6b97"
