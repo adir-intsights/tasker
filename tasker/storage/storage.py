@@ -21,7 +21,6 @@ class Storage:
     def acquire_lock_key(
         self,
         name,
-        ttl=None,
         timeout=None,
     ):
         try:
@@ -40,7 +39,6 @@ class Storage:
                 locked = self.set_key(
                     name=lock_key_name,
                     value='locked',
-                    ttl=ttl,
                 )
                 if locked:
                     return True
@@ -63,13 +61,13 @@ class Storage:
         name,
     ):
         try:
-            self.connector.key_del(
-                keys=[
-                    name,
-                    '_storage_{key_name}_lock'.format(
-                        key_name=name,
-                    ),
-                ],
+            self.connector.key_delete(
+                key='_storage_{key_name}_lock'.format(
+                    key_name=name,
+                ),
+            )
+            self.connector.key_delete(
+                key=name,
             )
         except Exception as exception:
             self.logger.error(
@@ -115,7 +113,6 @@ class Storage:
             key_was_set = self.connector.key_set(
                 key=name,
                 value=encoded_value,
-                ttl=ttl,
             )
 
             return key_was_set

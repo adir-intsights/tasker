@@ -9,10 +9,6 @@ class Connector(
 ):
     name = 'mongo'
 
-    never_expiration_date = datetime.datetime.utcnow() + datetime.timedelta(
-        days=10000,
-    )
-
     def __init__(
         self,
         mongodb_uri,
@@ -47,11 +43,6 @@ class Connector(
             ],
             background=True,
         )
-        self.connection.tasker.results.create_index(
-            keys='expiration_date',
-            expireAfterSeconds=0,
-            background=True,
-        )
         self.connection.tasker.sets.create_index(
             keys=[
                 (
@@ -71,28 +62,14 @@ class Connector(
         self,
         key,
         value,
-        ttl=None,
     ):
-        if ttl is None:
-            expiration_date = self.never_expiration_date
-        else:
-            expiration_date = datetime.datetime.utcnow() + datetime.timedelta(
-                seconds=ttl / 1000,
-            )
-
         update_one_result = self.connection.tasker.results.update_one(
             filter={
                 'key': key,
-                'expiration_date': {
-                    '$gt': datetime.datetime.utcnow(),
-                }
             },
             update={
-                '$setOnInsert': {
-                    'key': key,
-                    'expiration_date': expiration_date,
-                },
                 '$set': {
+                    'key': key,
                     'value': value,
                 },
             },
@@ -101,11 +78,8 @@ class Connector(
 
         if update_one_result.upserted_id is not None:
             return True
-
-        if update_one_result.modified_count == 0:
-            return False
         else:
-            return True
+            return False
 
     def key_get(
         self,
@@ -114,9 +88,6 @@ class Connector(
         document = self.connection.tasker.results.find_one(
             filter={
                 'key': key,
-                'expiration_date': {
-                    '$gt': datetime.datetime.utcnow(),
-                },
             },
         )
 
@@ -125,26 +96,25 @@ class Connector(
         else:
             return None
 
-    def key_del(
+    def key_delete(
         self,
-        keys,
+        key,
     ):
-        self.connection.tasker.results.delete_many(
+        delete_one_result = self.connection.tasker.results.delete_one(
             filter={
-                'key': {
-                    '$in': keys,
-                },
+                'key': key,
             },
         )
 
-    def pop(
+        return delete_one_result.deleted_count > 0
+
+    def queue_pop(
         self,
-        key,
-        timeout=0,
+        queue_name,
     ):
         document = self.connection.tasker.task_queue.find_one_and_delete(
             filter={
-                'queue_name': key,
+                'queue_name': queue_name,
             },
             projection={
                 'value': 1,
@@ -162,17 +132,17 @@ class Connector(
         else:
             return None
 
-    def pop_bulk(
+    def queue_pop_bulk(
         self,
-        key,
-        count,
+        queue_name,
+        number_of_items,
     ):
         documents = []
 
-        for i in range(count):
+        for i in range(number_of_items):
             document = self.connection.tasker.task_queue.find_one_and_delete(
                 filter={
-                    'queue_name': key,
+                    'queue_name': queue_name,
                 },
                 projection={
                     'value': 1,
@@ -192,11 +162,11 @@ class Connector(
 
         return documents
 
-    def push(
+    def queue_push(
         self,
-        key,
-        value,
-        priority,
+        queue_name,
+        item,
+        priority='NORMAL',
     ):
         if priority == 'HIGH':
             priority_value = 0
@@ -205,19 +175,19 @@ class Connector(
 
         insert_one_result = self.connection.tasker.task_queue.insert_one(
             document={
-                'queue_name': key,
+                'queue_name': queue_name,
                 'priority': priority_value,
-                'value': value,
+                'value': item,
             }
         )
 
         return insert_one_result.acknowledged
 
-    def push_bulk(
+    def queue_push_bulk(
         self,
-        key,
-        values,
-        priority,
+        queue_name,
+        items,
+        priority='NORMAL',
     ):
         if priority == 'HIGH':
             priority_value = 0
@@ -227,17 +197,41 @@ class Connector(
         insert_many_result = self.connection.tasker.task_queue.insert_many(
             documents=[
                 {
-                    'queue_name': key,
+                    'queue_name': queue_name,
                     'priority': priority_value,
-                    'value': value,
+                    'value': item,
                 }
-                for value in values
+                for item in items
             ]
         )
 
         return insert_many_result.acknowledged
 
-    def add_to_set(
+    def queue_length(
+        self,
+        queue_name,
+    ):
+        queue_length = self.connection.tasker.task_queue.count(
+            filter={
+                'queue_name': queue_name,
+            },
+        )
+
+        return queue_length
+
+    def queue_delete(
+        self,
+        queue_name,
+    ):
+        result = self.connection.tasker.task_queue.delete_many(
+            filter={
+                'queue_name': queue_name,
+            },
+        )
+
+        return result.deleted_count
+
+    def set_add(
         self,
         set_name,
         value,
@@ -254,7 +248,7 @@ class Connector(
         except pymongo.errors.DuplicateKeyError:
             return False
 
-    def remove_from_set(
+    def set_remove(
         self,
         set_name,
         value,
@@ -268,7 +262,7 @@ class Connector(
 
         return delete_one_result.deleted_count == 1
 
-    def is_member_of_set(
+    def set_contains(
         self,
         set_name,
         value,
@@ -285,29 +279,17 @@ class Connector(
         else:
             return False
 
-    def len(
+    def set_flush(
         self,
-        key,
+        set_name,
     ):
-        queue_length = self.connection.tasker.task_queue.count(
+        delete_many_result = self.connection.tasker.sets.delete_many(
             filter={
-                'queue_name': key,
-            },
+                'set_name': set_name,
+            }
         )
 
-        return queue_length
-
-    def delete(
-        self,
-        key,
-    ):
-        result = self.connection.tasker.task_queue.delete_many(
-            filter={
-                'queue_name': key,
-            },
-        )
-
-        return result.deleted_count
+        return delete_many_result.deleted_count > 0
 
     def __getstate__(
         self,

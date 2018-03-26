@@ -37,12 +37,10 @@ class Connector(
         self,
         key,
         value,
-        ttl=None,
     ):
         is_new = self.connection.set(
             name=key,
             value=value,
-            px=ttl,
             nx=True,
         )
 
@@ -56,19 +54,18 @@ class Connector(
             name=key,
         )
 
-    def key_del(
-        self,
-        keys,
-    ):
-        return self.connection.delete(*keys)
-
-    def pop(
+    def key_delete(
         self,
         key,
-        timeout=0,
+    ):
+        return self.connection.delete(key)
+
+    def queue_pop(
+        self,
+        queue_name,
     ):
         value = self.connection.lpop(
-            name=key,
+            name=queue_name,
         )
 
         if value is None:
@@ -76,15 +73,15 @@ class Connector(
         else:
             return value
 
-    def pop_bulk(
+    def queue_pop_bulk(
         self,
-        key,
-        count,
+        queue_name,
+        number_of_items,
     ):
         pipeline = self.connection.pipeline()
 
-        pipeline.lrange(key, 0, count - 1)
-        pipeline.ltrim(key, count, -1)
+        pipeline.lrange(queue_name, 0, number_of_items - 1)
+        pipeline.ltrim(queue_name, number_of_items, -1)
 
         value = pipeline.execute()
 
@@ -93,29 +90,43 @@ class Connector(
         else:
             return value[0]
 
-    def push(
+    def queue_push(
         self,
-        key,
-        value,
-        priority,
+        queue_name,
+        item,
+        priority='NORMAL',
     ):
         if priority == 'HIGH':
-            return self.connection.lpush(key, value)
+            return self.connection.lpush(queue_name, item)
 
-        return self.connection.rpush(key, value)
+        return self.connection.rpush(queue_name, item)
 
-    def push_bulk(
+    def queue_push_bulk(
         self,
-        key,
-        values,
-        priority,
+        queue_name,
+        items,
+        priority='NORMAL',
     ):
         if priority == 'HIGH':
-            return self.connection.lpush(key, *values)
+            return self.connection.lpush(queue_name, *items)
 
-        return self.connection.rpush(key, *values)
+        return self.connection.rpush(queue_name, *items)
 
-    def add_to_set(
+    def queue_length(
+        self,
+        queue_name,
+    ):
+        return self.connection.llen(
+            name=queue_name,
+        )
+
+    def queue_delete(
+        self,
+        queue_name,
+    ):
+        return self.connection.delete(queue_name)
+
+    def set_add(
         self,
         set_name,
         value,
@@ -124,7 +135,7 @@ class Connector(
 
         return bool(added)
 
-    def remove_from_set(
+    def set_remove(
         self,
         set_name,
         value,
@@ -133,7 +144,7 @@ class Connector(
 
         return bool(removed)
 
-    def is_member_of_set(
+    def set_contains(
         self,
         set_name,
         value,
@@ -145,19 +156,11 @@ class Connector(
 
         return is_memeber
 
-    def len(
+    def set_flush(
         self,
-        key,
+        set_name,
     ):
-        return self.connection.llen(
-            name=key,
-        )
-
-    def delete(
-        self,
-        key,
-    ):
-        return self.connection.delete(key)
+        return self.connection.delete(set_name)
 
     def __getstate__(
         self,

@@ -82,7 +82,7 @@ class Worker:
         )
         connector_class = connector.__connectors__[self.config['connector']['type']]
         connector_obj = connector_class(**self.config['connector']['params'])
-        queue_obj = queue.regular.Queue(
+        queue_obj = queue.Queue(
             connector=connector_obj,
             encoder=encoder_obj,
         )
