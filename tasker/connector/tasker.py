@@ -124,52 +124,6 @@ class Connector(
             queue_name=queue_name,
         )
 
-    def set_add(
-        self,
-        set_name,
-        value,
-    ):
-        added_to_set = self.connection.set_add(
-            set_name=set_name,
-            value=value,
-        )
-
-        return added_to_set
-
-    def set_remove(
-        self,
-        set_name,
-        value,
-    ):
-        removed_from_set = self.connection.set_remove(
-            set_name=set_name,
-            value=value,
-        )
-
-        return removed_from_set
-
-    def set_contains(
-        self,
-        set_name,
-        value,
-    ):
-        exists_in_set = self.connection.set_contains(
-            set_name=set_name,
-            value=value,
-        )
-
-        return exists_in_set
-
-    def set_flush(
-        self,
-        set_name,
-    ):
-        set_flushed = self.connection.set_flush(
-            set_name=set_name,
-        )
-
-        return set_flushed
-
     def __getstate__(
         self,
     ):

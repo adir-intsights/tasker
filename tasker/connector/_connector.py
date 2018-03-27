@@ -15,7 +15,6 @@ class Connector:
         self,
         key,
         value,
-        ttl=None,
     ):
         raise NotImplementedError()
 
@@ -69,27 +68,6 @@ class Connector:
     def queue_delete(
         self,
         queue_name,
-    ):
-        raise NotImplementedError()
-
-    def set_add(
-        self,
-        set_name,
-        value,
-    ):
-        raise NotImplementedError()
-
-    def set_remove(
-        self,
-        set_name,
-        value,
-    ):
-        raise NotImplementedError()
-
-    def set_contains(
-        self,
-        set_name,
-        value,
     ):
         raise NotImplementedError()
 

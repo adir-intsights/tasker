@@ -163,42 +163,6 @@ class Connector(
         for connection in self.connections:
             connection.delete(queue_name)
 
-    def set_add(
-        self,
-        set_name,
-        value,
-    ):
-        added = self.master_connection.sadd(set_name, value)
-
-        return bool(added)
-
-    def set_remove(
-        self,
-        set_name,
-        value,
-    ):
-        removed = self.master_connection.srem(set_name, value)
-
-        return bool(removed)
-
-    def set_contains(
-        self,
-        set_name,
-        value,
-    ):
-        is_memeber = self.master_connection.sismember(
-            name=set_name,
-            value=value,
-        )
-
-        return is_memeber
-
-    def set_flush(
-        self,
-        set_name,
-    ):
-        return self.master_connection.delete(set_name)
-
     def __getstate__(
         self,
     ):

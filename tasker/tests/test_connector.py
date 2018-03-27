@@ -228,138 +228,6 @@ class ConnectorTestCase:
                 second=0,
             )
 
-    def test_set(
-        self,
-    ):
-        for connector_object in [
-            self.connector,
-            self.pickled_connector,
-        ]:
-            connector_object.set_remove(
-                set_name=self.test_set_name,
-                value=self.test_set_value_one,
-            )
-            connector_object.set_remove(
-                set_name=self.test_set_name,
-                value=self.test_set_value_two,
-            )
-
-            exists_in_set = connector_object.set_contains(
-                set_name=self.test_set_name,
-                value=self.test_set_value_one,
-            )
-            self.assertFalse(
-                expr=exists_in_set,
-            )
-            is_new_in_set = connector_object.set_add(
-                set_name=self.test_set_name,
-                value=self.test_set_value_one,
-            )
-            self.assertTrue(
-                expr=is_new_in_set,
-            )
-            is_new_in_set = connector_object.set_add(
-                set_name=self.test_set_name,
-                value=self.test_set_value_one,
-            )
-            self.assertFalse(
-                expr=is_new_in_set,
-            )
-            exists_in_set = connector_object.set_contains(
-                set_name=self.test_set_name,
-                value=self.test_set_value_one,
-            )
-            self.assertTrue(
-                expr=exists_in_set,
-            )
-            exists_in_set = connector_object.set_contains(
-                set_name=self.test_set_name,
-                value=self.test_set_value_two,
-            )
-            self.assertFalse(
-                expr=exists_in_set,
-            )
-            is_new_in_set = connector_object.set_add(
-                set_name=self.test_set_name,
-                value=self.test_set_value_two,
-            )
-            self.assertTrue(
-                expr=is_new_in_set,
-            )
-            exists_in_set = connector_object.set_contains(
-                set_name=self.test_set_name,
-                value=self.test_set_value_two,
-            )
-            self.assertTrue(
-                expr=exists_in_set,
-            )
-            exists_in_set = connector_object.set_contains(
-                set_name=self.test_set_name,
-                value=self.test_set_value_one,
-            )
-            self.assertTrue(
-                expr=exists_in_set,
-            )
-            removed_from_set = connector_object.set_remove(
-                set_name=self.test_set_name,
-                value=self.test_set_value_one,
-            )
-            self.assertTrue(
-                expr=removed_from_set,
-            )
-            removed_from_set = connector_object.set_remove(
-                set_name=self.test_set_name,
-                value=self.test_set_value_one,
-            )
-            self.assertFalse(
-                expr=removed_from_set,
-            )
-            exists_in_set = connector_object.set_contains(
-                set_name=self.test_set_name,
-                value=self.test_set_value_one,
-            )
-            self.assertFalse(
-                expr=exists_in_set,
-            )
-            exists_in_set = connector_object.set_contains(
-                set_name=self.test_set_name,
-                value=self.test_set_value_two,
-            )
-            self.assertTrue(
-                expr=exists_in_set,
-            )
-            is_new_in_set = connector_object.set_add(
-                set_name=self.test_set_name,
-                value=self.test_set_value_one,
-            )
-            self.assertTrue(
-                expr=is_new_in_set,
-            )
-            exists_in_set = connector_object.set_contains(
-                set_name=self.test_set_name,
-                value=self.test_set_value_one,
-            )
-            self.assertTrue(
-                expr=exists_in_set,
-            )
-            connector_object.set_flush(
-                set_name=self.test_set_name,
-            )
-            exists_in_set = connector_object.set_contains(
-                set_name=self.test_set_name,
-                value=self.test_set_value_one,
-            )
-            self.assertFalse(
-                expr=exists_in_set,
-            )
-            exists_in_set = connector_object.set_contains(
-                set_name=self.test_set_name,
-                value=self.test_set_value_two,
-            )
-            self.assertFalse(
-                expr=exists_in_set,
-            )
-
 
 class MongoConnectorTestCase(
     ConnectorTestCase,
@@ -449,7 +317,7 @@ class TaskerServerConnectorTestCase(
     ):
         self.connector = connector.tasker.Connector(
             host='127.0.0.1',
-            port=8080,
+            port=50001,
         )
         self.pickled_connector = pickle.dumps(self.connector)
         self.pickled_connector = pickle.loads(self.pickled_connector)

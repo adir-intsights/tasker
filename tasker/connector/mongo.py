@@ -1,5 +1,4 @@
 import pymongo
-import datetime
 
 from . import _connector
 
@@ -42,20 +41,6 @@ class Connector(
                 ),
             ],
             background=True,
-        )
-        self.connection.tasker.sets.create_index(
-            keys=[
-                (
-                    'set_name',
-                    pymongo.ASCENDING,
-                ),
-                (
-                    'value',
-                    pymongo.ASCENDING,
-                ),
-            ],
-            background=True,
-            unique=True,
         )
 
     def key_set(
@@ -230,66 +215,6 @@ class Connector(
         )
 
         return result.deleted_count
-
-    def set_add(
-        self,
-        set_name,
-        value,
-    ):
-        try:
-            self.connection.tasker.sets.insert_one(
-                document={
-                    'set_name': set_name,
-                    'value': value,
-                }
-            )
-
-            return True
-        except pymongo.errors.DuplicateKeyError:
-            return False
-
-    def set_remove(
-        self,
-        set_name,
-        value,
-    ):
-        delete_one_result = self.connection.tasker.sets.delete_one(
-            filter={
-                'set_name': set_name,
-                'value': value,
-            }
-        )
-
-        return delete_one_result.deleted_count == 1
-
-    def set_contains(
-        self,
-        set_name,
-        value,
-    ):
-        find_one_result = self.connection.tasker.sets.find_one(
-            filter={
-                'set_name': set_name,
-                'value': value,
-            }
-        )
-
-        if find_one_result:
-            return True
-        else:
-            return False
-
-    def set_flush(
-        self,
-        set_name,
-    ):
-        delete_many_result = self.connection.tasker.sets.delete_many(
-            filter={
-                'set_name': set_name,
-            }
-        )
-
-        return delete_many_result.deleted_count > 0
 
     def __getstate__(
         self,

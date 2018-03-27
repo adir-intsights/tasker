@@ -3,7 +3,7 @@ import setuptools
 
 setuptools.setup(
     name='tasker',
-    version='0.4.0',
+    version='0.5.0',
     author='gal@intsights.com',
     author_email='gal@intsights.com',
     description=('A fast, simple, task distribution library'),
@@ -11,14 +11,13 @@ setuptools.setup(
     install_requires=[
         'aiohttp',
         'aioredis',
+        'grpcio',
         'hiredis',
-        'japronto',
         'msgpack-python',
         'psutil',
         'pymongo',
         'python-rocksdb',
         'redis',
-        'requests',
         'uvloop==0.8.1',
     ],
     packages=setuptools.find_packages(),

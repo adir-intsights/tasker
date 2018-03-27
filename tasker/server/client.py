@@ -1,5 +1,7 @@
-import requests
-import pickle
+import grpc
+
+from . import tasker_pb2
+from . import tasker_pb2_grpc
 
 
 class TaskerServerClient:
@@ -8,56 +10,55 @@ class TaskerServerClient:
         host,
         port,
     ):
-        self.host = host
-        self.port = port
+        channel = grpc.insecure_channel(
+            target='{host}:{port}'.format(
+                host=host,
+                port=port,
+            ),
+            options=None,
+        )
 
-        self.api_url = 'http://{host}:{port}/'.format(
-            host=host,
-            port=port,
+        self.tasker_server_stub = tasker_pb2_grpc.TaskerServerStub(
+            channel=channel,
         )
 
     def key_get(
         self,
         key,
     ):
-        response = requests.post(
-            url=self.api_url + 'key_get?key={key}'.format(
-                key=key,
-            ),
+        key_get_request = tasker_pb2.KeyGetRequest(
+            key=key,
         )
+        response = self.tasker_server_stub.key_get(key_get_request)
 
-        if response.status_code == 404:
-            return None
+        if response.key_exists:
+            return response.value
         else:
-            return response.content
+            return None
 
     def key_set(
         self,
         key,
         value,
     ):
-        response = requests.post(
-            url=self.api_url + 'key_set?key={key}'.format(
-                key=key,
-            ),
-            data=value,
+        key_set_request = tasker_pb2.KeySetRequest(
+            key=key,
+            value=value,
         )
+        response = self.tasker_server_stub.key_set(key_set_request)
 
-        key_is_new = response.status_code == 200
-
-        return key_is_new
+        return response.key_is_new
 
     def key_delete(
         self,
         key,
     ):
-        response = requests.post(
-            url=self.api_url + 'key_delete?key={key}'.format(
-                key=key,
-            ),
+        key_delete_request = tasker_pb2.KeyDeleteRequest(
+            key=key,
         )
+        response = self.tasker_server_stub.key_delete(key_delete_request)
 
-        return response.ok is True
+        return response.success
 
     def queue_push(
         self,
@@ -65,118 +66,46 @@ class TaskerServerClient:
         items,
         priority,
     ):
-        response = requests.post(
-            url=self.api_url + 'queue_push?queue_name={queue_name}&priority={priority}'.format(
-                queue_name=queue_name,
-                priority=priority,
-            ),
-            data=pickle.dumps(
-                obj=items,
-            )
+        queue_push_request = tasker_pb2.QueuePushRequest(
+            queue_name=queue_name,
+            priority=priority,
+            items=items,
         )
+        response = self.tasker_server_stub.queue_push(queue_push_request)
 
-        if response.ok:
-            return True
-        else:
-            return False
+        return response.success
 
     def queue_pop(
         self,
         queue_name,
         number_of_items,
     ):
-        response = requests.post(
-            url=self.api_url + 'queue_pop?queue_name={queue_name}&number_of_items={number_of_items}'.format(
-                queue_name=queue_name,
-                number_of_items=number_of_items,
-            ),
+        queue_pop_request = tasker_pb2.QueuePopRequest(
+            queue_name=queue_name,
+            number_of_items=number_of_items,
         )
+        response = self.tasker_server_stub.queue_pop(queue_pop_request)
 
-        items = pickle.loads(
-            data=response.content,
-        )
-
-        return items
+        return response.items
 
     def queue_delete(
         self,
         queue_name,
     ):
-        response = requests.post(
-            url=self.api_url + 'queue_delete?queue_name={queue_name}'.format(
-                queue_name=queue_name,
-            ),
+        queue_delete_request = tasker_pb2.QueueDeleteRequest(
+            queue_name=queue_name,
         )
+        response = self.tasker_server_stub.queue_delete(queue_delete_request)
 
-        return response.ok is True
+        return response.success
 
     def queue_length(
         self,
         queue_name,
     ):
-        response = requests.post(
-            url=self.api_url + 'queue_length?queue_name={queue_name}'.format(
-                queue_name=queue_name,
-            ),
+        queue_length_request = tasker_pb2.QueueLengthRequest(
+            queue_name=queue_name,
         )
-        queue_number_of_items = int(response.content)
+        response = self.tasker_server_stub.queue_length(queue_length_request)
 
-        return queue_number_of_items
-
-    def set_add(
-        self,
-        set_name,
-        value,
-    ):
-        response = requests.post(
-            url=self.api_url + 'set_add?set_name={set_name}'.format(
-                set_name=set_name,
-            ),
-            data=value,
-        )
-        item_new_in_set = response.status_code == 200
-
-        return item_new_in_set
-
-    def set_remove(
-        self,
-        set_name,
-        value,
-    ):
-        response = requests.post(
-            url=self.api_url + 'set_remove?set_name={set_name}'.format(
-                set_name=set_name,
-            ),
-            data=value,
-        )
-        item_removed_from_set = response.status_code == 200
-
-        return item_removed_from_set
-
-    def set_contains(
-        self,
-        set_name,
-        value,
-    ):
-        response = requests.post(
-            url=self.api_url + 'set_contains?set_name={set_name}'.format(
-                set_name=set_name,
-            ),
-            data=value,
-        )
-        item_exists_in_set = response.status_code == 200
-
-        return item_exists_in_set
-
-    def set_flush(
-        self,
-        set_name,
-    ):
-        response = requests.post(
-            url=self.api_url + 'set_flush?set_name={set_name}'.format(
-                set_name=set_name,
-            ),
-        )
-        set_flushed = response.status_code == 200
-
-        return set_flushed
+        return response.queue_length

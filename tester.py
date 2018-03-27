@@ -20,12 +20,10 @@ class Worker(
             }
         },
         'connector': {
-            'type': 'redis',
+            'type': 'tasker',
             'params': {
                 'host': 'localhost',
-                'port': 6380,
-                'password': 'e082ebf6c7fff3997c4bb1cb64d6bdecd0351fa270402d98d35acceef07c6b97',
-                'database': 0,
+                'port': 50001,
             },
         },
         'timeouts': {
@@ -47,7 +45,7 @@ class Worker(
             'num_of_slowest_methods_to_log': 50,
         },
         'max_tasks_per_run': 25000,
-        'tasks_per_transaction': 5000,
+        'tasks_per_transaction': 25000,
         'max_retries': 3,
         'report_completion': False,
         'heartbeat_interval': 10.0,
@@ -79,15 +77,16 @@ def main():
     )
 
     print(time.time())
-    tasks = []
-    for j in range(100000):
-        task_obj = worker.craft_task(
-            run_type='',
+    for i in range(10):
+        tasks = []
+        for j in range(10000):
+            task_obj = worker.craft_task(
+                run_type='',
+            )
+            tasks.append(task_obj)
+        worker.apply_async_many(
+            tasks=tasks,
         )
-        tasks.append(task_obj)
-    worker.apply_async_many(
-        tasks=tasks,
-    )
     print(time.time())
 
     worker.apply_async_one(
