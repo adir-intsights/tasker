@@ -44,7 +44,7 @@ class Worker(
             'enabled': True,
             'num_of_slowest_methods_to_log': 50,
         },
-        'max_tasks_per_run': 25000,
+        'max_tasks_per_run': 1000000,
         'tasks_per_transaction': 25000,
         'max_retries': 3,
         'report_completion': False,
@@ -61,11 +61,9 @@ class Worker(
         run_type,
     ):
         if run_type == 'start':
-            self.logger.error('start')
-            self.logger.error(time.time())
+            self.logger.error('start    : {}'.format(time.time()))
         elif run_type == 'end':
-            self.logger.error('end')
-            self.logger.error(time.time())
+            self.logger.error('end      : {}'.format(time.time()))
 
 
 def main():
@@ -76,18 +74,20 @@ def main():
         run_type='start',
     )
 
-    print(time.time())
-    for i in range(10):
-        tasks = []
-        for j in range(10000):
-            task_obj = worker.craft_task(
-                run_type='',
+    before_push = time.time()
+    for i in range(1):
+        for i in range(5):
+            tasks = []
+            for j in range(20000):
+                task_obj = worker.craft_task(
+                    run_type='',
+                )
+                tasks.append(task_obj)
+            worker.apply_async_many(
+                tasks=tasks,
             )
-            tasks.append(task_obj)
-        worker.apply_async_many(
-            tasks=tasks,
-        )
-    print(time.time())
+    after_push = time.time()
+    print('pushing time: {}'.format(after_push - before_push))
 
     worker.apply_async_one(
         run_type='end',

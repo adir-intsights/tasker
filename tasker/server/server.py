@@ -1,3 +1,4 @@
+import time
 import concurrent.futures
 import grpc
 import rocksdb
@@ -37,12 +38,26 @@ class TaskerServerServicer(
             exist_ok=True,
         )
 
+        rocksdb_options = rocksdb.Options()
+        rocksdb_options.create_if_missing = True
+        rocksdb_options.max_open_files = 300000
+        rocksdb_options.write_buffer_size = 67108864
+        rocksdb_options.max_write_buffer_number = 3
+        rocksdb_options.target_file_size_base = 67108864
+        rocksdb_options.compression = rocksdb.CompressionType.no_compression
+        rocksdb_options.table_factory = rocksdb.BlockBasedTableFactory(
+            filter_policy=rocksdb.BloomFilterPolicy(
+                bits_per_key=10,
+            ),
+            block_cache=rocksdb.LRUCache(
+                capacity=2 * (1024 ** 3),
+            ),
+            block_cache_compressed=None,
+        )
+
         sub_database = rocksdb.DB(
             db_name=database_path,
-            opts=rocksdb.Options(
-                create_if_missing=True,
-                compression=rocksdb.CompressionType.no_compression,
-            ),
+            opts=rocksdb_options,
         )
         self.sub_databases[database_path] = sub_database
 
@@ -75,15 +90,21 @@ class TaskerServerServicer(
             if items_fetched == number_of_items:
                 break
 
-        database_write_batch = rocksdb.WriteBatch()
-        for key in keys:
-            database_write_batch.delete(key)
+        if keys:
+            database_write_batch = rocksdb.WriteBatch()
+            for key in keys:
+                database_write_batch.delete(key)
 
-        sub_database.write(
-            batch=database_write_batch,
-            sync=True,
-            disable_wal=True,
-        )
+            sub_database.write(
+                batch=database_write_batch,
+                sync=True,
+                disable_wal=True,
+            )
+
+            sub_database.compact_range(
+                begin=None,
+                end=keys[-1],
+            )
 
         return tasker_pb2.QueuePopResponse(
             items=items,
@@ -109,7 +130,7 @@ class TaskerServerServicer(
                 last_item_key = current_items[0]
                 next_item_number = int(last_item_key.decode('utf-8')) + 1
             else:
-                next_item_number = int((10 ** 16) / 2) + 1
+                next_item_number = int((10 ** 16) / 2)
             factor = 1
         elif request.priority == 'HIGH':
             database_iterator.seek_to_first()
@@ -181,6 +202,11 @@ class TaskerServerServicer(
             if num_of_keys != num_of_keys_per_chunk:
                 break
 
+        sub_database.compact_range(
+            begin=None,
+            end=None,
+        )
+
         return tasker_pb2.QueueDeleteResponse(
             success=True,
         )
@@ -194,17 +220,37 @@ class TaskerServerServicer(
             database_name='queues',
             sub_database_name=request.queue_name,
         )
+        sub_database.compact_range(
+            begin=None,
+            end=None,
+        )
 
         database_iterator = sub_database.iterkeys()
+
         database_iterator.seek_to_first()
+        try:
+            current_item = next(database_iterator)
+        except StopIteration:
+            return tasker_pb2.QueueLengthResponse(
+                queue_length=0,
+            )
 
-        num_of_keys = 0
-        for key in database_iterator:
-            num_of_keys += 1
+        first_item_key = current_item
+        first_item_number = int(first_item_key.decode('utf-8')) + 1
 
-        return tasker_pb2.QueueLengthResponse(
-            queue_length=num_of_keys,
-        )
+        database_iterator.seek_to_last()
+        current_item = next(database_iterator)
+        last_item_key = current_item
+        last_item_number = int(last_item_key.decode('utf-8')) + 1
+
+        if first_item_number == last_item_number:
+            return tasker_pb2.QueueLengthResponse(
+                queue_length=1,
+            )
+        else:
+            return tasker_pb2.QueueLengthResponse(
+                queue_length=last_item_number - first_item_number,
+            )
 
     def key_get(
         self,
@@ -309,8 +355,11 @@ def main():
     )
     server.start()
 
-    import time
-    time.sleep(100000)
+    while True:
+        try:
+            time.sleep(60 * 60 * 24)
+        except KeyboardInterrupt:
+            break
 
 
 if __name__ == '__main__':

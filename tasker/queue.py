@@ -119,11 +119,6 @@ class Queue:
             self.connector.queue_delete(
                 queue_name=queue_name,
             )
-            self.connector.set_flush(
-                set_name='{queue_name}.results'.format(
-                    queue_name=queue_name,
-                ),
-            )
 
             return True
         except Exception as exception:
