@@ -558,5 +558,5 @@ class TaskerServerQueueTestCase(
     ):
         self.connector = connector.tasker.Connector(
             host='127.0.0.1',
-            port=8080,
+            port=50001,
         )

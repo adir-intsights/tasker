@@ -236,21 +236,16 @@ class TaskerServerServicer(
             )
 
         first_item_key = current_item
-        first_item_number = int(first_item_key.decode('utf-8')) + 1
+        first_item_number = int(first_item_key.decode('utf-8'))
 
         database_iterator.seek_to_last()
         current_item = next(database_iterator)
         last_item_key = current_item
-        last_item_number = int(last_item_key.decode('utf-8')) + 1
+        last_item_number = int(last_item_key.decode('utf-8'))
 
-        if first_item_number == last_item_number:
-            return tasker_pb2.QueueLengthResponse(
-                queue_length=1,
-            )
-        else:
-            return tasker_pb2.QueueLengthResponse(
-                queue_length=last_item_number - first_item_number,
-            )
+        return tasker_pb2.QueueLengthResponse(
+            queue_length=last_item_number - first_item_number + 1,
+        )
 
     def key_get(
         self,

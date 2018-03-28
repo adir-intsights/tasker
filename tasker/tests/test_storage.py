@@ -279,7 +279,7 @@ class TaskerServerStorageTestCase(
     ):
         self.tasker_server_connector = connector.tasker.Connector(
             host='127.0.0.1',
-            port=8080,
+            port=50001,
         )
 
         self.storage = storage.storage.Storage(
