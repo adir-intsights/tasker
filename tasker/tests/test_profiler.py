@@ -1,6 +1,6 @@
 import unittest
 import time
-import requests
+import urllib.request
 
 from .. import profiler
 
@@ -19,7 +19,9 @@ class ProfilerTestCase(
     ):
         time.sleep(time_to_wait)
 
-        requests.get('https://www.google.com')
+        urllib.request.urlopen(
+            url='https://www.google.com',
+        ).read()
 
     def test_profiling_results(
         self,
