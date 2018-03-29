@@ -59,7 +59,7 @@ before_install:
     "
 
 script:
-  - |
+- |
   docker run \
     --interactive \
     --tty \
