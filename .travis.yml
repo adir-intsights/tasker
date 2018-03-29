@@ -9,12 +9,13 @@ services:
   - docker
 
 install:
-  - docker pull fedora
-  - docker build -t tasker:tasker .
+  - echo "started"
 
 before_install:
   - docker pull redis
   - docker pull mongo
+  - docker pull fedora
+  - docker build -t tasker:tasker .
   - |
     docker run \
       --interactive \
