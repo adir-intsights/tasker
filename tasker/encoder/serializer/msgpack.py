@@ -22,7 +22,7 @@ class Serializer(
     ):
         unserialized_object = msgpack.loads(
             packed=data,
-            encoding='utf-8',
+            raw=False,
         )
 
         return unserialized_object

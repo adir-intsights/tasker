@@ -231,6 +231,8 @@ class Worker:
 
             executor_kwargs = {
                 'work_method': self.work,
+                'pre_work_method': self.pre_work,
+                'post_work_method': self.post_work,
                 'update_current_task': self.update_current_task,
                 'on_success': self._on_success,
                 'on_timeout': self._on_timeout,
@@ -589,6 +591,16 @@ class Worker:
         pass
 
     def work(
+        self,
+    ):
+        pass
+
+    def pre_work(
+        self,
+    ):
+        pass
+
+    def post_work(
         self,
     ):
         pass

@@ -8,6 +8,8 @@ class Executor:
     def __init__(
         self,
         work_method,
+        pre_work_method,
+        post_work_method,
         update_current_task,
         on_success,
         on_timeout,
@@ -19,6 +21,8 @@ class Executor:
         worker_task_queue,
     ):
         self.work_method = work_method
+        self.pre_work_method = pre_work_method
+        self.post_work_method = post_work_method
         self.update_current_task = update_current_task
         self.on_success = on_success
         self.on_timeout = on_timeout
@@ -68,6 +72,8 @@ class Executor:
             work_profiler.start()
 
         try:
+            self.pre_work_method()
+
             returned_value = self.work_method(
                 *task['args'],
                 **task['kwargs'],
@@ -75,6 +81,8 @@ class Executor:
         except Exception as exception:
             success_execution = False
             raised_exception = exception
+        finally:
+            self.post_work_method()
 
         if self.worker_config['profiler']['enabled']:
             work_profiler.stop()
