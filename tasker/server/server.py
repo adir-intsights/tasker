@@ -20,6 +20,7 @@ class TaskerServerServicer(
             exist_ok=True,
         )
         self.sub_databases = {}
+        self.number_of_deleted_items = 0
 
     def get_sub_database(
         self,
@@ -101,10 +102,13 @@ class TaskerServerServicer(
                 disable_wal=True,
             )
 
-            sub_database.compact_range(
-                begin=None,
-                end=keys[-1],
-            )
+            self.number_of_deleted_items += items_fetched
+            if self.number_of_deleted_items > 10000:
+                self.number_of_deleted_items = 0
+                sub_database.compact_range(
+                    begin=None,
+                    end=keys[-1],
+                )
 
         return tasker_pb2.QueuePopResponse(
             items=items,
