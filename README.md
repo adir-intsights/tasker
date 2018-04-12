@@ -44,7 +44,7 @@ docker run \
     --volume "${PWD}":/tasker \
     tasker:tasker bash -c " \
         cd /tasker; \
-        python3.6 -m tasker.server.server; \
+        python3.6 -m tasker.server.server --port=50001 --database-path /tasker_db; \
     "
 ```
 

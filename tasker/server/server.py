@@ -1,4 +1,5 @@
 import time
+import argparse
 import concurrent.futures
 import grpc
 import rocksdb
@@ -14,9 +15,12 @@ class TaskerServerServicer(
 ):
     def __init__(
         self,
+        database_path,
     ):
+        self.database_path = database_path
+
         os.makedirs(
-            name='tasker_db',
+            name=database_path,
             exist_ok=True,
         )
         self.sub_databases = {}
@@ -27,9 +31,13 @@ class TaskerServerServicer(
         database_name,
         sub_database_name,
     ):
-        database_path = 'tasker_db/{database_name}/{sub_database_name}'.format(
+        database_path = '{database_name}/{sub_database_name}'.format(
             database_name=database_name,
             sub_database_name=sub_database_name,
+        )
+        database_path = os.path.join(
+            self.database_path,
+            database_path,
         )
         if database_path in self.sub_databases:
             return self.sub_databases[database_path]
@@ -340,17 +348,40 @@ class TaskerServerServicer(
 
 
 def main():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        '--database-path',
+        help='path where the server should store the database files',
+        type=str,
+        required=True,
+    )
+
+    parser.add_argument(
+        '--port',
+        help='on what port should the server listen',
+        type=int,
+        required=True,
+    )
+
+    args = parser.parse_args()
+
+    tasker_server_servicer = TaskerServerServicer(
+        database_path=args.database_path,
+    )
     server = grpc.server(
         thread_pool=concurrent.futures.ThreadPoolExecutor(
             max_workers=1,
         ),
     )
     tasker_pb2_grpc.add_TaskerServerServicer_to_server(
-        servicer=TaskerServerServicer(),
+        servicer=tasker_server_servicer,
         server=server,
     )
     server.add_insecure_port(
-        address='[::]:50001',
+        address='[::]:{port}'.format(
+            port=args.port,
+        ),
     )
     server.start()
 
