@@ -107,7 +107,6 @@ class TaskerServerServicer(
             sub_database.write(
                 batch=database_write_batch,
                 sync=True,
-                disable_wal=True,
             )
 
             self.number_of_deleted_items += items_fetched
@@ -172,7 +171,6 @@ class TaskerServerServicer(
         sub_database.write(
             batch=database_write_batch,
             sync=True,
-            disable_wal=True,
         )
 
         return tasker_pb2.QueuePushResponse(
@@ -208,7 +206,6 @@ class TaskerServerServicer(
             sub_database.write(
                 batch=database_write_batch,
                 sync=True,
-                disable_wal=True,
             )
 
             if num_of_keys != num_of_keys_per_chunk:
@@ -303,7 +300,6 @@ class TaskerServerServicer(
             key=request.key.encode('utf-8'),
             value=request.value,
             sync=True,
-            disable_wal=True,
         )
 
         if is_new_key:
@@ -339,7 +335,6 @@ class TaskerServerServicer(
         keys_database.delete(
             key=request.key.encode('utf-8'),
             sync=True,
-            disable_wal=True,
         )
 
         return tasker_pb2.KeyDeleteResponse(
