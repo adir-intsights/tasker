@@ -229,10 +229,6 @@ class TaskerServerServicer(
             database_name='queues',
             sub_database_name=request.queue_name,
         )
-        sub_database.compact_range(
-            begin=None,
-            end=None,
-        )
 
         database_iterator = sub_database.iterkeys()
 
