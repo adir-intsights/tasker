@@ -294,3 +294,49 @@ class RocksDBBackendTestCase(
                 first=queue_length,
                 second=0,
             )
+
+    def test_queue_scenario_four(
+        self,
+    ):
+        backend_queue = backends.rocksdb.RocksDBQueue(
+            database_path='/tmp/tasker_db_tests',
+            database_name='test_queue',
+        )
+
+        backend_queue.queue_delete()
+
+        backend_queue.queue_push(
+            items=[
+                b'1',
+            ] * 1000,
+            priority='NORMAL',
+        )
+
+        queue_length = backend_queue.queue_length()
+        self.assertEqual(
+            first=queue_length,
+            second=1000,
+        )
+
+        del backend_queue
+
+        backend_queue = backends.rocksdb.RocksDBQueue(
+            database_path='/tmp/tasker_db_tests',
+            database_name='test_queue',
+        )
+
+        queue_length = backend_queue.queue_length()
+        self.assertEqual(
+            first=queue_length,
+            second=1000,
+        )
+
+        popped_items = backend_queue.queue_pop(
+            number_of_items=1000,
+        )
+        self.assertEqual(
+            first=popped_items,
+            second=[
+                b'1',
+            ] * 1000,
+        )

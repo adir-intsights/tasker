@@ -42,19 +42,20 @@ class RocksDBQueue:
         )
         self.database_iterator = self.database_obj.iteritems()
 
-        self.database_iterator.seek_to_first()
-        try:
-            key, value = next(self.database_iterator)
-            self.first_key = key
-        except StopIteration:
-            self.first_key = b''
-
         self.database_iterator.seek_to_last()
         try:
             key, value = next(self.database_iterator)
             self.last_key = key
         except StopIteration:
             self.last_key = b''
+
+        self.database_iterator.seek_to_first()
+        try:
+            key, value = next(self.database_iterator)
+            self.first_key = key
+            self.database_iterator.seek(self.first_key)
+        except StopIteration:
+            self.first_key = b''
 
         self.db_was_changed_recently = False
 
