@@ -2,10 +2,9 @@ import time
 import argparse
 import concurrent.futures
 import grpc
-import rocksdb
-import rocksdb.errors
 import os
 
+from . import backends
 from . import tasker_pb2
 from . import tasker_pb2_grpc
 
@@ -23,99 +22,45 @@ class TaskerServerServicer(
             name=database_path,
             exist_ok=True,
         )
-        self.sub_databases = {}
-        self.number_of_deleted_items = 0
+        self.databases = {}
 
-    def get_sub_database(
+        self.keys_database = backends.rocksdb.RocksDBKeys(
+            database_path=database_path,
+            database_name='all',
+        )
+
+    def get_queue_database(
         self,
         database_name,
-        sub_database_name,
     ):
-        database_path = '{database_name}/{sub_database_name}'.format(
+        database_id = '{database_path}_queues_{database_name}'.format(
+            database_path=self.database_path,
             database_name=database_name,
-            sub_database_name=sub_database_name,
-        )
-        database_path = os.path.join(
-            self.database_path,
-            database_path,
-        )
-        if database_path in self.sub_databases:
-            return self.sub_databases[database_path]
-
-        os.makedirs(
-            name=database_path,
-            exist_ok=True,
         )
 
-        rocksdb_options = rocksdb.Options()
-        rocksdb_options.create_if_missing = True
-        rocksdb_options.max_open_files = 300000
-        rocksdb_options.write_buffer_size = 67108864
-        rocksdb_options.max_write_buffer_number = 3
-        rocksdb_options.target_file_size_base = 67108864
-        rocksdb_options.compression = rocksdb.CompressionType.no_compression
-        rocksdb_options.table_factory = rocksdb.BlockBasedTableFactory(
-            filter_policy=rocksdb.BloomFilterPolicy(
-                bits_per_key=10,
-            ),
-            block_cache=rocksdb.LRUCache(
-                capacity=2 * (1024 ** 3),
-            ),
-            block_cache_compressed=None,
-        )
+        if database_id in self.databases:
+            return self.databases[database_id]
+        else:
+            database = backends.rocksdb.RocksDBQueue(
+                database_path=self.database_path,
+                database_name=database_name,
+            )
+            self.databases[database_id] = database
 
-        sub_database = rocksdb.DB(
-            db_name=database_path,
-            opts=rocksdb_options,
-        )
-        self.sub_databases[database_path] = sub_database
-
-        return sub_database
+            return database
 
     def queue_pop(
         self,
         request,
         context,
     ):
-        sub_database = self.get_sub_database(
-            database_name='queues',
-            sub_database_name=request.queue_name,
+        database = self.get_queue_database(
+            database_name=request.queue_name,
         )
 
-        number_of_items = request.number_of_items
-
-        items = []
-        keys = []
-
-        database_iterator = sub_database.iteritems()
-        database_iterator.seek_to_first()
-
-        items_fetched = 0
-        for key, value in database_iterator:
-            items.append(value)
-            keys.append(key)
-
-            items_fetched += 1
-            if items_fetched == number_of_items:
-                break
-
-        if keys:
-            database_write_batch = rocksdb.WriteBatch()
-            for key in keys:
-                database_write_batch.delete(key)
-
-            sub_database.write(
-                batch=database_write_batch,
-                sync=True,
-            )
-
-            self.number_of_deleted_items += items_fetched
-            if self.number_of_deleted_items > 10000:
-                self.number_of_deleted_items = 0
-                sub_database.compact_range(
-                    begin=None,
-                    end=keys[-1],
-                )
+        items = database.queue_pop(
+            number_of_items=request.number_of_items,
+        )
 
         return tasker_pb2.QueuePopResponse(
             items=items,
@@ -126,55 +71,17 @@ class TaskerServerServicer(
         request,
         context,
     ):
-        sub_database = self.get_sub_database(
-            database_name='queues',
-            sub_database_name=request.queue_name,
+        database = self.get_queue_database(
+            database_name=request.queue_name,
         )
 
-        items = request.items
-        database_iterator = sub_database.iterkeys()
-
-        if request.priority == 'NORMAL':
-            database_iterator.seek_to_last()
-            current_items = list(database_iterator)
-            if current_items:
-                last_item_key = current_items[0]
-                next_item_number = int(last_item_key.decode('utf-8')) + 1
-            else:
-                next_item_number = int((10 ** 16) / 2)
-            factor = 1
-        elif request.priority == 'HIGH':
-            database_iterator.seek_to_first()
-            current_items = list(database_iterator)
-            if current_items:
-                last_item_key = current_items[0]
-                next_item_number = int(last_item_key.decode('utf-8')) - 1
-            else:
-                next_item_number = int((10 ** 16) / 2) - 1
-            factor = -1
-        else:
-            raise Exception(
-                'unknown priority level: {priority}'.format(
-                    priority=request.priority,
-                )
-            )
-
-        database_write_batch = rocksdb.WriteBatch()
-        for item in items:
-            next_item_number_bytes = str(next_item_number).rjust(20, '0').encode('utf-8')
-            database_write_batch.put(
-                next_item_number_bytes,
-                item,
-            )
-            next_item_number += factor
-
-        sub_database.write(
-            batch=database_write_batch,
-            sync=True,
+        item_pushed = database.queue_push(
+            items=request.items,
+            priority=request.priority,
         )
 
         return tasker_pb2.QueuePushResponse(
-            success=True,
+            success=item_pushed,
         )
 
     def queue_delete(
@@ -182,42 +89,14 @@ class TaskerServerServicer(
         request,
         context,
     ):
-        sub_database = self.get_sub_database(
-            database_name='queues',
-            sub_database_name=request.queue_name,
+        database = self.get_queue_database(
+            database_name=request.queue_name,
         )
 
-        database_iterator = sub_database.iterkeys()
-        database_iterator.seek_to_first()
-
-        while True:
-            database_write_batch = rocksdb.WriteBatch()
-
-            num_of_keys = 0
-            num_of_keys_per_chunk = 5000
-
-            for key in database_iterator:
-                database_write_batch.delete(key)
-
-                num_of_keys += 1
-                if num_of_keys == num_of_keys_per_chunk:
-                    break
-
-            sub_database.write(
-                batch=database_write_batch,
-                sync=True,
-            )
-
-            if num_of_keys != num_of_keys_per_chunk:
-                break
-
-        sub_database.compact_range(
-            begin=None,
-            end=None,
-        )
+        queue_deleted = database.queue_delete()
 
         return tasker_pb2.QueueDeleteResponse(
-            success=True,
+            success=queue_deleted,
         )
 
     def queue_length(
@@ -225,31 +104,14 @@ class TaskerServerServicer(
         request,
         context,
     ):
-        sub_database = self.get_sub_database(
-            database_name='queues',
-            sub_database_name=request.queue_name,
+        database = self.get_queue_database(
+            database_name=request.queue_name,
         )
 
-        database_iterator = sub_database.iterkeys()
-
-        database_iterator.seek_to_first()
-        try:
-            current_item = next(database_iterator)
-        except StopIteration:
-            return tasker_pb2.QueueLengthResponse(
-                queue_length=0,
-            )
-
-        first_item_key = current_item
-        first_item_number = int(first_item_key.decode('utf-8'))
-
-        database_iterator.seek_to_last()
-        current_item = next(database_iterator)
-        last_item_key = current_item
-        last_item_number = int(last_item_key.decode('utf-8'))
+        queue_length = database.queue_length()
 
         return tasker_pb2.QueueLengthResponse(
-            queue_length=last_item_number - first_item_number + 1,
+            queue_length=queue_length,
         )
 
     def key_get(
@@ -257,13 +119,8 @@ class TaskerServerServicer(
         request,
         context,
     ):
-        keys_database = self.get_sub_database(
-            database_name='keys',
-            sub_database_name='all',
-        )
-
-        value = keys_database.get(
-            key=request.key.encode('utf-8'),
+        value = self.keys_database.key_get(
+            key=request.key,
         )
 
         if value is None:
@@ -282,20 +139,9 @@ class TaskerServerServicer(
         request,
         context,
     ):
-        keys_database = self.get_sub_database(
-            database_name='keys',
-            sub_database_name='all',
-        )
-
-        current_key = keys_database.get(
-            key=request.key.encode('utf-8'),
-        )
-        is_new_key = current_key is None
-
-        keys_database.put(
-            key=request.key.encode('utf-8'),
+        is_new_key = self.keys_database.key_set(
+            key=request.key,
             value=request.value,
-            sync=True,
         )
 
         if is_new_key:
@@ -314,27 +160,12 @@ class TaskerServerServicer(
         request,
         context,
     ):
-        keys_database = self.get_sub_database(
-            database_name='keys',
-            sub_database_name='all',
-        )
-
-        current_key = keys_database.get(
-            key=request.key.encode('utf-8'),
-        )
-        key_does_not_exist = current_key is None
-        if key_does_not_exist:
-            return tasker_pb2.KeyDeleteResponse(
-                success=False,
-            )
-
-        keys_database.delete(
-            key=request.key.encode('utf-8'),
-            sync=True,
+        key_deleted = self.keys_database.key_delete(
+            key=request.key,
         )
 
         return tasker_pb2.KeyDeleteResponse(
-            success=True,
+            success=key_deleted,
         )
 
 
