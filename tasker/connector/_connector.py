@@ -15,7 +15,6 @@ class Connector:
         self,
         key,
         value,
-        ttl=None,
     ):
         raise NotImplementedError()
 
@@ -25,72 +24,50 @@ class Connector:
     ):
         raise NotImplementedError()
 
-    def key_del(
+    def key_delete(
         self,
-        keys,
+        key,
     ):
         raise NotImplementedError()
 
-    def pop(
+    def queue_pop(
         self,
-        key,
-        timeout=0,
+        queue_name,
     ):
         raise NotImplementedError()
 
-    def pop_bulk(
+    def queue_pop_bulk(
         self,
-        key,
-        count,
+        queue_name,
+        number_of_items,
     ):
         raise NotImplementedError()
 
-    def push(
+    def queue_push(
         self,
-        key,
-        value,
+        queue_name,
+        item,
         priority,
     ):
         raise NotImplementedError()
 
-    def push_bulk(
+    def queue_push_bulk(
         self,
-        key,
-        values,
+        queue_name,
+        items,
         priority,
     ):
         raise NotImplementedError()
 
-    def add_to_set(
+    def queue_length(
         self,
-        set_name,
-        value,
+        queue_name,
     ):
         raise NotImplementedError()
 
-    def remove_from_set(
+    def queue_delete(
         self,
-        set_name,
-        value,
-    ):
-        raise NotImplementedError()
-
-    def is_member_of_set(
-        self,
-        set_name,
-        value,
-    ):
-        raise NotImplementedError()
-
-    def len(
-        self,
-        key,
-    ):
-        raise NotImplementedError()
-
-    def delete(
-        self,
-        key,
+        queue_name,
     ):
         raise NotImplementedError()
 

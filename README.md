@@ -11,19 +11,9 @@ docker run \
     --tty \
     --rm \
     --publish=6379:6379 \
-    --privileged \
-    --log-driver=json-file --log-opt=max-size=10m \
     redis bash -c " \
-        echo 65535 > /proc/sys/net/core/somaxconn; \
-        echo never > /sys/kernel/mm/transparent_hugepage/enabled; \
-        echo 1 > /proc/sys/vm/overcommit_memory; \
         redis-server \
-            --maxclients 65535 \
             --save '' \
-            --tcp-backlog 65535 \
-            --tcp-keepalive 10 \
-            --maxmemory 1gb \
-            --maxmemory-policy noeviction \
             --protected-mode no \
             --bind 0.0.0.0 \
             --requirepass e082ebf6c7fff3997c4bb1cb64d6bdecd0351fa270402d98d35acceef07c6b97 \
@@ -33,19 +23,9 @@ docker run \
     --tty \
     --rm \
     --publish=6380:6379 \
-    --privileged \
-    --log-driver=json-file --log-opt=max-size=10m \
     redis bash -c " \
-        echo 65535 > /proc/sys/net/core/somaxconn; \
-        echo never > /sys/kernel/mm/transparent_hugepage/enabled; \
-        echo 1 > /proc/sys/vm/overcommit_memory; \
         redis-server \
-            --maxclients 65535 \
             --save '' \
-            --tcp-backlog 65535 \
-            --tcp-keepalive 10 \
-            --maxmemory 1gb \
-            --maxmemory-policy noeviction \
             --protected-mode no \
             --bind 0.0.0.0 \
             --requirepass e082ebf6c7fff3997c4bb1cb64d6bdecd0351fa270402d98d35acceef07c6b97 \
@@ -55,9 +35,17 @@ docker run \
     --tty \
     --rm \
     --publish=27030:27017 \
-    --privileged \
-    --log-driver=json-file --log-opt=max-size=10m \
     mongo
+docker run \
+    --interactive \
+    --tty \
+    --rm \
+    --publish=50001:50001 \
+    --volume "${PWD}":/tasker \
+    tasker:tasker bash -c " \
+        cd /tasker; \
+        python3.6 -m tasker.server.server --port=50001 --database-path /tasker_db; \
+    "
 ```
 
 ## Start a monitoring server
@@ -67,8 +55,6 @@ docker run \
     --interactive \
     --tty \
     --rm \
-    --net=host \
-    --log-driver=json-file --log-opt=max-size=10m \
     --publish=9999:9999/udp \
     --publish=8080:8080 \
     python bash -c " \
@@ -86,5 +72,16 @@ docker run \
 ## Run tests
 
 ```shell
+docker run \
+    --interactive \
+    --tty \
+    --rm \
+    --net=host \
+    --volume "${PWD}":/tasker \
+    tasker:tasker bash -c " \
+        cd /tasker; \
+        pytest tasker/tests; \
+    "
+
 python3 -m unittest discover tasker.tests
 ```

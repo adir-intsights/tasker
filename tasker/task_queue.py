@@ -35,7 +35,7 @@ class TaskQueue:
         task_name,
     ):
         try:
-            number_of_enqueued_tasks = self.queue.len(
+            number_of_enqueued_tasks = self.queue.length(
                 queue_name=task_name,
             )
 
@@ -82,7 +82,7 @@ class TaskQueue:
             completion_key = random.randint(0, 9999999999999)
             added = self.queue.add_result(
                 queue_name=task_name,
-                value=completion_key,
+                result_id=completion_key,
             )
 
         return completion_key
@@ -96,7 +96,7 @@ class TaskQueue:
         if completion_key:
             removed = self.queue.remove_result(
                 queue_name=task['name'],
-                value=completion_key,
+                result_id=completion_key,
             )
 
             return removed
@@ -116,7 +116,7 @@ class TaskQueue:
 
         has_result = self.queue.has_result(
             queue_name=task['name'],
-            value=completion_key,
+            result_id=completion_key,
         )
         while has_result:
             if timeout and remaining_time <= 0:
@@ -124,7 +124,7 @@ class TaskQueue:
 
             has_result = self.queue.has_result(
                 queue_name=task['name'],
-                value=completion_key,
+                result_id=completion_key,
             )
 
             time.sleep(0.5)
@@ -157,7 +157,7 @@ class TaskQueue:
         try:
             self.queue.enqueue(
                 queue_name=task['name'],
-                value=task,
+                items=[task],
                 priority=priority,
             )
 
@@ -188,9 +188,9 @@ class TaskQueue:
 
         try:
             for task_name, tasks in task_name_to_tasks.items():
-                self.queue.enqueue_bulk(
+                self.queue.enqueue(
                     queue_name=task_name,
-                    values=tasks,
+                    items=tasks,
                     priority=priority,
                 )
 
@@ -210,22 +210,12 @@ class TaskQueue:
         number_of_tasks,
     ):
         try:
-            if number_of_tasks == 1:
-                task = self.queue.dequeue(
-                    queue_name=task_name,
-                )
+            tasks = self.queue.dequeue(
+                queue_name=task_name,
+                number_of_items=number_of_tasks,
+            )
 
-                if task:
-                    return [task]
-                else:
-                    return []
-            else:
-                tasks = self.queue.dequeue_bulk(
-                    queue_name=task_name,
-                    count=number_of_tasks,
-                )
-
-                return tasks
+            return tasks
         except Exception as exception:
             self.logger.error(
                 msg='could not pull task: {exception}'.format(

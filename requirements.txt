@@ -1,9 +1,10 @@
-redis
+aiohttp
+aioredis
+grpcio
 hiredis
 msgpack-python
 psutil
-aiohttp
-aioredis
-uvloop==0.8.1
-requests
 pymongo
+python-rocksdb
+redis
+uvloop==0.8.1

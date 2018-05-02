@@ -44,12 +44,10 @@ class Connector(
         self,
         key,
         value,
-        ttl=None,
     ):
         is_new = self.master_connection.set(
             name=key,
             value=value,
-            px=ttl,
             nx=True,
         )
 
@@ -63,22 +61,21 @@ class Connector(
             name=key,
         )
 
-    def key_del(
-        self,
-        keys,
-    ):
-        return self.master_connection.delete(*keys)
-
-    def pop(
+    def key_delete(
         self,
         key,
-        timeout=0,
+    ):
+        return self.master_connection.delete(key)
+
+    def queue_pop(
+        self,
+        queue_name,
     ):
         connections = self.connections
 
         for connection in connections:
             value = connection.lpop(
-                name=key,
+                name=queue_name,
             )
 
             self.rotate_connections()
@@ -88,116 +85,83 @@ class Connector(
 
         return None
 
-    def pop_bulk(
+    def queue_pop_bulk(
         self,
-        key,
-        count,
+        queue_name,
+        number_of_items,
     ):
         values = []
         connections = self.connections
-        current_count = count
+        current_count = number_of_items
 
         for connection in connections:
             pipeline = connection.pipeline()
 
-            pipeline.lrange(key, 0, current_count - 1)
-            pipeline.ltrim(key, current_count, -1)
+            pipeline.lrange(queue_name, 0, current_count - 1)
+            pipeline.ltrim(queue_name, current_count, -1)
 
             value = pipeline.execute()
 
             self.rotate_connections()
 
-            if len(value) != 1:
-                values += value[0]
+            values += value[0]
 
-                continue
-
-            if len(values) == count:
+            if len(values) == number_of_items:
                 return values
 
-            current_count = count - len(values)
+            current_count = number_of_items - len(values)
 
         return values
 
-    def push(
+    def queue_push(
         self,
-        key,
-        value,
-        priority,
+        queue_name,
+        item,
+        priority='NORMAL',
     ):
         if priority == 'HIGH':
-            push_returned_value = self.connections[0].lpush(key, value)
+            push_returned_value = self.connections[0].lpush(queue_name, item)
         else:
-            push_returned_value = self.connections[0].rpush(key, value)
+            push_returned_value = self.connections[0].rpush(queue_name, item)
 
         self.rotate_connections()
 
         return push_returned_value
 
-    def push_bulk(
+    def queue_push_bulk(
         self,
-        key,
-        values,
-        priority,
+        queue_name,
+        items,
+        priority='NORMAL',
     ):
         if priority == 'HIGH':
-            push_returned_value = self.connections[0].lpush(key, *values)
+            push_returned_value = self.connections[0].lpush(queue_name, *items)
         else:
-            push_returned_value = self.connections[0].rpush(key, *values)
+            push_returned_value = self.connections[0].rpush(queue_name, *items)
 
         self.rotate_connections()
 
         return push_returned_value
 
-    def add_to_set(
+    def queue_length(
         self,
-        set_name,
-        value,
-    ):
-        added = self.master_connection.sadd(set_name, value)
-
-        return bool(added)
-
-    def remove_from_set(
-        self,
-        set_name,
-        value,
-    ):
-        removed = self.master_connection.srem(set_name, value)
-
-        return bool(removed)
-
-    def is_member_of_set(
-        self,
-        set_name,
-        value,
-    ):
-        is_memeber = self.master_connection.sismember(
-            name=set_name,
-            value=value,
-        )
-
-        return is_memeber
-
-    def len(
-        self,
-        key,
+        queue_name,
     ):
         total_len = 0
 
         for connection in self.connections:
             total_len += connection.llen(
-                name=key,
+                name=queue_name,
             )
 
         return total_len
 
-    def delete(
+    def queue_delete(
         self,
-        key,
+        queue_name,
     ):
         for connection in self.connections:
-            connection.delete(key)
+            connection.delete(queue_name)
 
     def __getstate__(
         self,

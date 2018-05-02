@@ -9,10 +9,33 @@ from .. import encoder
 
 
 class QueueTestCase:
+    @classmethod
+    def setUpClass(
+        cls,
+    ):
+        cls.test_queue_name = 'test_queue_name'
+        cls.enqueued_value_first = {
+            'str': 'string1',
+            'date': datetime.datetime.utcnow().timestamp(),
+            'array': [1, 2, 3, 4],
+        }
+        cls.enqueued_value_second = {
+            'str': 'string2',
+            'date': datetime.datetime.utcnow().timestamp(),
+            'array': [2, 3, 4, 5],
+        }
+        cls.enqueued_value_third = {
+            'str': 'string3',
+            'date': datetime.datetime.utcnow().timestamp(),
+            'array': [3, 4, 5, 6],
+        }
+
+        cls.test_result_id = str(uuid.uuid4())
+
     def test_no_compression_queue(
         self,
     ):
-        test_queue = queue.regular.Queue(
+        test_queue = queue.Queue(
             connector=self.connector,
             encoder=encoder.encoder.Encoder(
                 compressor_name='dummy',
@@ -21,20 +44,20 @@ class QueueTestCase:
         )
 
         self.queue_functionality(
-            queue_name='no_compression_queue',
             test_queue=test_queue,
-            enqueued_value=self.enqueued_value,
         )
-        self.queue_pickleability(
-            queue_name='no_compression_queue',
-            test_queue=test_queue,
-            enqueued_value=self.enqueued_value,
+
+        pickled_queue = pickle.dumps(test_queue)
+        pickled_queue = pickle.loads(pickled_queue)
+
+        self.queue_functionality(
+            test_queue=pickled_queue,
         )
 
     def test_zlib_queue(
         self,
     ):
-        test_queue = queue.regular.Queue(
+        test_queue = queue.Queue(
             connector=self.connector,
             encoder=encoder.encoder.Encoder(
                 compressor_name='zlib',
@@ -43,20 +66,20 @@ class QueueTestCase:
         )
 
         self.queue_functionality(
-            queue_name='zlib_compression_queue',
             test_queue=test_queue,
-            enqueued_value=self.enqueued_value,
         )
-        self.queue_pickleability(
-            queue_name='zlib_compression_queue',
-            test_queue=test_queue,
-            enqueued_value=self.enqueued_value,
+
+        pickled_queue = pickle.dumps(test_queue)
+        pickled_queue = pickle.loads(pickled_queue)
+
+        self.queue_functionality(
+            test_queue=pickled_queue,
         )
 
     def test_gzip_queue(
         self,
     ):
-        test_queue = queue.regular.Queue(
+        test_queue = queue.Queue(
             connector=self.connector,
             encoder=encoder.encoder.Encoder(
                 compressor_name='gzip',
@@ -65,20 +88,20 @@ class QueueTestCase:
         )
 
         self.queue_functionality(
-            queue_name='gzip_compression_queue',
             test_queue=test_queue,
-            enqueued_value=self.enqueued_value,
         )
-        self.queue_pickleability(
-            queue_name='gzip_compression_queue',
-            test_queue=test_queue,
-            enqueued_value=self.enqueued_value,
+
+        pickled_queue = pickle.dumps(test_queue)
+        pickled_queue = pickle.loads(pickled_queue)
+
+        self.queue_functionality(
+            test_queue=pickled_queue,
         )
 
     def test_bzip2_queue(
         self,
     ):
-        test_queue = queue.regular.Queue(
+        test_queue = queue.Queue(
             connector=self.connector,
             encoder=encoder.encoder.Encoder(
                 compressor_name='bzip2',
@@ -87,20 +110,20 @@ class QueueTestCase:
         )
 
         self.queue_functionality(
-            queue_name='bzip2_compression_queue',
             test_queue=test_queue,
-            enqueued_value=self.enqueued_value,
         )
-        self.queue_pickleability(
-            queue_name='bzip2_compression_queue',
-            test_queue=test_queue,
-            enqueued_value=self.enqueued_value,
+
+        pickled_queue = pickle.dumps(test_queue)
+        pickled_queue = pickle.loads(pickled_queue)
+
+        self.queue_functionality(
+            test_queue=pickled_queue,
         )
 
     def test_lzma_queue(
         self,
     ):
-        test_queue = queue.regular.Queue(
+        test_queue = queue.Queue(
             connector=self.connector,
             encoder=encoder.encoder.Encoder(
                 compressor_name='lzma',
@@ -109,20 +132,20 @@ class QueueTestCase:
         )
 
         self.queue_functionality(
-            queue_name='lzma_compression_queue',
             test_queue=test_queue,
-            enqueued_value=self.enqueued_value,
         )
-        self.queue_pickleability(
-            queue_name='lzma_compression_queue',
-            test_queue=test_queue,
-            enqueued_value=self.enqueued_value,
+
+        pickled_queue = pickle.dumps(test_queue)
+        pickled_queue = pickle.loads(pickled_queue)
+
+        self.queue_functionality(
+            test_queue=pickled_queue,
         )
 
     def test_pickle_queue(
         self,
     ):
-        test_queue = queue.regular.Queue(
+        test_queue = queue.Queue(
             connector=self.connector,
             encoder=encoder.encoder.Encoder(
                 compressor_name='dummy',
@@ -131,20 +154,20 @@ class QueueTestCase:
         )
 
         self.queue_functionality(
-            queue_name='pickle_queue',
             test_queue=test_queue,
-            enqueued_value=self.enqueued_value,
         )
-        self.queue_pickleability(
-            queue_name='pickle_queue',
-            test_queue=test_queue,
-            enqueued_value=self.enqueued_value,
+
+        pickled_queue = pickle.dumps(test_queue)
+        pickled_queue = pickle.loads(pickled_queue)
+
+        self.queue_functionality(
+            test_queue=pickled_queue,
         )
 
     def test_msgpack_queue(
         self,
     ):
-        test_queue = queue.regular.Queue(
+        test_queue = queue.Queue(
             connector=self.connector,
             encoder=encoder.encoder.Encoder(
                 compressor_name='dummy',
@@ -153,20 +176,20 @@ class QueueTestCase:
         )
 
         self.queue_functionality(
-            queue_name='pickle_queue',
             test_queue=test_queue,
-            enqueued_value=self.enqueued_value,
         )
-        self.queue_pickleability(
-            queue_name='pickle_queue',
-            test_queue=test_queue,
-            enqueued_value=self.enqueued_value,
+
+        pickled_queue = pickle.dumps(test_queue)
+        pickled_queue = pickle.loads(pickled_queue)
+
+        self.queue_functionality(
+            test_queue=pickled_queue,
         )
 
     def test_msgpack_compressed_queue(
         self,
     ):
-        test_queue = queue.regular.Queue(
+        test_queue = queue.Queue(
             connector=self.connector,
             encoder=encoder.encoder.Encoder(
                 compressor_name='zlib',
@@ -175,20 +198,20 @@ class QueueTestCase:
         )
 
         self.queue_functionality(
-            queue_name='pickle_queue',
             test_queue=test_queue,
-            enqueued_value=self.enqueued_value,
         )
-        self.queue_pickleability(
-            queue_name='pickle_queue',
-            test_queue=test_queue,
-            enqueued_value=self.enqueued_value,
+
+        pickled_queue = pickle.dumps(test_queue)
+        pickled_queue = pickle.loads(pickled_queue)
+
+        self.queue_functionality(
+            test_queue=pickled_queue,
         )
 
     def test_pickle_compressed_queue(
         self,
     ):
-        test_queue = queue.regular.Queue(
+        test_queue = queue.Queue(
             connector=self.connector,
             encoder=encoder.encoder.Encoder(
                 compressor_name='zlib',
@@ -197,186 +220,265 @@ class QueueTestCase:
         )
 
         self.queue_functionality(
-            queue_name='pickle_queue',
             test_queue=test_queue,
-            enqueued_value=self.enqueued_value,
         )
-        self.queue_pickleability(
-            queue_name='pickle_queue',
-            test_queue=test_queue,
-            enqueued_value=self.enqueued_value,
+
+        pickled_queue = pickle.dumps(test_queue)
+        pickled_queue = pickle.loads(pickled_queue)
+
+        self.queue_functionality(
+            test_queue=pickled_queue,
         )
 
     def queue_functionality(
         self,
-        queue_name,
         test_queue,
-        enqueued_value,
     ):
         test_queue.flush(
-            queue_name=queue_name,
+            queue_name=self.test_queue_name,
         )
-        self.assertEqual(test_queue.len(queue_name=queue_name), 0)
+        queue_length = test_queue.length(
+            queue_name=self.test_queue_name,
+        )
+        self.assertEqual(
+            first=queue_length,
+            second=0,
+        )
 
         test_queue.enqueue(
-            queue_name=queue_name,
-            value=enqueued_value,
+            queue_name=self.test_queue_name,
+            items=[self.enqueued_value_first],
             priority='NORMAL',
         )
 
-        self.assertEqual(test_queue.len(queue_name=queue_name), 1)
-
-        returned_value = test_queue.dequeue(
-            queue_name=queue_name,
+        queue_length = test_queue.length(
+            queue_name=self.test_queue_name,
+        )
+        self.assertEqual(
+            first=queue_length,
+            second=1,
         )
 
-        self.assertEqual(enqueued_value, returned_value)
-        self.assertEqual(test_queue.len(queue_name=queue_name), 0)
+        test_queue.enqueue(
+            queue_name=self.test_queue_name,
+            items=[self.enqueued_value_second],
+            priority='NORMAL',
+        )
 
-        for i in range(10):
+        queue_length = test_queue.length(
+            queue_name=self.test_queue_name,
+        )
+        self.assertEqual(
+            first=queue_length,
+            second=2,
+        )
+
+        test_queue.enqueue(
+            queue_name=self.test_queue_name,
+            items=[self.enqueued_value_third],
+            priority='NORMAL',
+        )
+
+        queue_length = test_queue.length(
+            queue_name=self.test_queue_name,
+        )
+        self.assertEqual(
+            first=queue_length,
+            second=3,
+        )
+
+        returned_value_first = test_queue.dequeue(
+            queue_name=self.test_queue_name,
+            number_of_items=1,
+        )
+        queue_length = test_queue.length(
+            queue_name=self.test_queue_name,
+        )
+        self.assertEqual(
+            first=queue_length,
+            second=2,
+        )
+
+        returned_value_second = test_queue.dequeue(
+            queue_name=self.test_queue_name,
+            number_of_items=1,
+        )
+        queue_length = test_queue.length(
+            queue_name=self.test_queue_name,
+        )
+        self.assertEqual(
+            first=queue_length,
+            second=1,
+        )
+
+        returned_value_third = test_queue.dequeue(
+            queue_name=self.test_queue_name,
+            number_of_items=1,
+        )
+        queue_length = test_queue.length(
+            queue_name=self.test_queue_name,
+        )
+        self.assertEqual(
+            first=queue_length,
+            second=0,
+        )
+
+        self.assertIn(
+            member=returned_value_first[0],
+            container=[
+                self.enqueued_value_first,
+                self.enqueued_value_second,
+                self.enqueued_value_third,
+            ],
+        )
+        self.assertIn(
+            member=returned_value_second[0],
+            container=[
+                self.enqueued_value_first,
+                self.enqueued_value_second,
+                self.enqueued_value_third,
+            ],
+        )
+        self.assertIn(
+            member=returned_value_third[0],
+            container=[
+                self.enqueued_value_first,
+                self.enqueued_value_second,
+                self.enqueued_value_third,
+            ],
+        )
+
+        for i in range(100):
             test_queue.enqueue(
-                queue_name=queue_name,
-                value=enqueued_value,
+                queue_name=self.test_queue_name,
+                items=[self.enqueued_value_first],
                 priority='NORMAL',
             )
-        self.assertEqual(test_queue.len(queue_name=queue_name), 10)
-        test_queue.flush(
-            queue_name=queue_name,
-        )
-        self.assertEqual(test_queue.len(queue_name=queue_name), 0)
 
-        test_queue.enqueue_bulk(
-            queue_name=queue_name,
-            values=[enqueued_value] * 100,
+        queue_length = test_queue.length(
+            queue_name=self.test_queue_name,
+        )
+        self.assertEqual(
+            first=queue_length,
+            second=100,
+        )
+
+        test_queue.flush(
+            queue_name=self.test_queue_name,
+        )
+        queue_length = test_queue.length(
+            queue_name=self.test_queue_name,
+        )
+        self.assertEqual(
+            first=queue_length,
+            second=0,
+        )
+
+        test_queue.enqueue(
+            queue_name=self.test_queue_name,
+            items=[self.enqueued_value_first] * 1000,
             priority='NORMAL',
         )
-        self.assertEqual(test_queue.len(queue_name=queue_name), 100)
-        values = test_queue.dequeue_bulk(
-            queue_name=queue_name,
-            count=100,
+        queue_length = test_queue.length(
+            queue_name=self.test_queue_name,
         )
-        self.assertEqual(test_queue.len(queue_name=queue_name), 0)
-        self.assertEqual(values, [enqueued_value] * 100)
-        test_queue.flush(
-            queue_name=queue_name,
-        )
-        self.assertEqual(test_queue.len(queue_name=queue_name), 0)
-
-        added = test_queue.add_result(
-            queue_name=queue_name,
-            value=self.test_set_value,
-        )
-        self.assertTrue(added)
-        added = test_queue.add_result(
-            queue_name=queue_name,
-            value=self.test_set_value,
-        )
-        self.assertFalse(added)
-        is_member = test_queue.has_result(
-            queue_name=queue_name,
-            value=self.test_set_value,
-        )
-        self.assertTrue(is_member)
-        removed = test_queue.remove_result(
-            queue_name=queue_name,
-            value=self.test_set_value,
-        )
-        self.assertTrue(removed)
-        removed = test_queue.remove_result(
-            queue_name=queue_name,
-            value=self.test_set_value,
-        )
-        self.assertFalse(removed)
-
-    def queue_pickleability(
-        self,
-        queue_name,
-        test_queue,
-        enqueued_value,
-    ):
-        test_queue.flush(
-            queue_name=queue_name,
-        )
-        pickled_queue = pickle.dumps(test_queue)
-        pickled_queue = pickle.loads(pickled_queue)
-
-        self.assertEqual(test_queue.len(queue_name=queue_name), 0)
-
-        pickled_queue.enqueue(
-            queue_name=queue_name,
-            value=enqueued_value,
-            priority='NORMAL',
+        self.assertEqual(
+            first=queue_length,
+            second=1000,
         )
 
-        self.assertEqual(pickled_queue.len(queue_name=queue_name), 1)
-        self.assertEqual(test_queue.len(queue_name=queue_name), 1)
-
-        returned_value = pickled_queue.dequeue(
-            queue_name=queue_name,
+        values = test_queue.dequeue(
+            queue_name=self.test_queue_name,
+            number_of_items=100,
+        )
+        queue_length = test_queue.length(
+            queue_name=self.test_queue_name,
+        )
+        self.assertEqual(
+            first=queue_length,
+            second=900,
         )
 
-        self.assertEqual(enqueued_value, returned_value)
-        self.assertEqual(pickled_queue.len(queue_name=queue_name), 0)
-        self.assertEqual(test_queue.len(queue_name=queue_name), 0)
+        self.assertEqual(
+            first=values,
+            second=[self.enqueued_value_first] * 100,
+        )
 
-        for i in range(10):
-            pickled_queue.enqueue(
-                queue_name=queue_name,
-                value=enqueued_value,
-                priority='NORMAL',
-            )
-        self.assertEqual(pickled_queue.len(queue_name=queue_name), 10)
-        self.assertEqual(test_queue.len(queue_name=queue_name), 10)
-        pickled_queue.flush(queue_name=queue_name)
-        self.assertEqual(pickled_queue.len(queue_name=queue_name), 0)
-        self.assertEqual(test_queue.len(queue_name=queue_name), 0)
+        values = test_queue.dequeue(
+            queue_name=self.test_queue_name,
+            number_of_items=900,
+        )
+        queue_length = test_queue.length(
+            queue_name=self.test_queue_name,
+        )
+        self.assertEqual(
+            first=queue_length,
+            second=0,
+        )
 
-        pickled_queue.enqueue_bulk(
-            queue_name=queue_name,
-            values=[enqueued_value] * 100,
-            priority='NORMAL',
+        self.assertEqual(
+            first=values,
+            second=[self.enqueued_value_first] * 900,
         )
-        self.assertEqual(pickled_queue.len(queue_name=queue_name), 100)
-        self.assertEqual(test_queue.len(queue_name=queue_name), 100)
-        values = pickled_queue.dequeue_bulk(
-            queue_name=queue_name,
-            count=100,
-        )
-        self.assertEqual(pickled_queue.len(queue_name=queue_name), 0)
-        self.assertEqual(test_queue.len(queue_name=queue_name), 0)
-        self.assertEqual(values, [enqueued_value] * 100)
-        pickled_queue.flush(queue_name=queue_name)
-        self.assertEqual(pickled_queue.len(queue_name=queue_name), 0)
-        self.assertEqual(test_queue.len(queue_name=queue_name), 0)
 
-        added = pickled_queue.add_result(
-            queue_name=queue_name,
-            value=self.test_set_value,
+        test_queue.remove_result(
+            queue_name=self.test_queue_name,
+            result_id=self.test_result_id,
         )
-        self.assertTrue(added)
-        added = pickled_queue.add_result(
-            queue_name=queue_name,
-            value=self.test_set_value,
+        result_exists = test_queue.has_result(
+            queue_name=self.test_queue_name,
+            result_id=self.test_result_id,
         )
-        self.assertFalse(added)
-        is_member = pickled_queue.has_result(
-            queue_name=queue_name,
-            value=self.test_set_value,
+        self.assertFalse(
+            expr=result_exists,
         )
-        self.assertTrue(is_member)
-        removed = pickled_queue.remove_result(
-            queue_name=queue_name,
-            value=self.test_set_value,
+
+        result_added = test_queue.add_result(
+            queue_name=self.test_queue_name,
+            result_id=self.test_result_id,
         )
-        self.assertTrue(removed)
-        removed = pickled_queue.remove_result(
-            queue_name=queue_name,
-            value=self.test_set_value,
+        self.assertTrue(
+            expr=result_added,
         )
-        self.assertFalse(removed)
+        result_added = test_queue.add_result(
+            queue_name=self.test_queue_name,
+            result_id=self.test_result_id,
+        )
+        self.assertFalse(
+            expr=result_added,
+        )
+        result_exists = test_queue.has_result(
+            queue_name=self.test_queue_name,
+            result_id=self.test_result_id,
+        )
+        self.assertTrue(
+            expr=result_exists,
+        )
+
+        result_removed = test_queue.remove_result(
+            queue_name=self.test_queue_name,
+            result_id=self.test_result_id,
+        )
+        self.assertTrue(
+            expr=result_removed,
+        )
+        result_exists = test_queue.has_result(
+            queue_name=self.test_queue_name,
+            result_id=self.test_result_id,
+        )
+        self.assertFalse(
+            expr=result_exists,
+        )
+        result_removed = test_queue.remove_result(
+            queue_name=self.test_queue_name,
+            result_id=self.test_result_id,
+        )
+        self.assertFalse(
+            expr=result_removed,
+        )
 
 
-class SingleMongoStorageTestCase(
+class SingleMongoQueueTestCase(
     QueueTestCase,
     unittest.TestCase,
 ):
@@ -387,16 +489,8 @@ class SingleMongoStorageTestCase(
             mongodb_uri='mongodb://localhost:27030/',
         )
 
-        self.enqueued_value = {
-            'str': 'string',
-            'date': datetime.datetime.utcnow().timestamp(),
-            'array': [1, 2, 3, 4],
-        }
 
-        self.test_set_value = uuid.uuid4()
-
-
-class SingleRedisStorageTestCase(
+class SingleRedisQueueTestCase(
     QueueTestCase,
     unittest.TestCase,
 ):
@@ -410,16 +504,8 @@ class SingleRedisStorageTestCase(
             database=0,
         )
 
-        self.enqueued_value = {
-            'str': 'string',
-            'date': datetime.datetime.utcnow().timestamp(),
-            'array': [1, 2, 3, 4],
-        }
 
-        self.test_set_value = uuid.uuid4()
-
-
-class RedisClusterStorageTestCase(
+class RedisClusterMultipleServersQueueTestCase(
     QueueTestCase,
     unittest.TestCase,
 ):
@@ -443,10 +529,34 @@ class RedisClusterStorageTestCase(
             ]
         )
 
-        self.enqueued_value = {
-            'str': 'string',
-            'date': datetime.datetime.utcnow().timestamp(),
-            'array': [1, 2, 3, 4],
-        }
 
-        self.test_set_value = uuid.uuid4()
+class RedisClusterSingleServerQueueTestCase(
+    QueueTestCase,
+    unittest.TestCase,
+):
+    def setUp(
+        self,
+    ):
+        self.connector = connector.redis_cluster.Connector(
+            nodes=[
+                {
+                    'host': '127.0.0.1',
+                    'port': 6379,
+                    'password': 'e082ebf6c7fff3997c4bb1cb64d6bdecd0351fa270402d98d35acceef07c6b97',
+                    'database': 0,
+                },
+            ]
+        )
+
+
+class TaskerServerQueueTestCase(
+    QueueTestCase,
+    unittest.TestCase,
+):
+    def setUp(
+        self,
+    ):
+        self.connector = connector.tasker.Connector(
+            host='127.0.0.1',
+            port=50001,
+        )
