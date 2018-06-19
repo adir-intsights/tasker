@@ -140,7 +140,11 @@ class TaskQueueTestCase:
 
         task = self.test_task_queue.craft_task(
             task_name='test_task',
-            args=(1, 2, 3),
+            args=(
+                1,
+                2,
+                3,
+            ),
             kwargs={
                 'a': 1,
                 'b': 2,
@@ -162,7 +166,11 @@ class TaskQueueTestCase:
             first=task,
             second={
                 'name': 'test_task',
-                'args': (1, 2, 3),
+                'args': (
+                    1,
+                    2,
+                    3,
+                ),
                 'kwargs': {
                     'a': 1,
                     'b': 2,
@@ -215,7 +223,9 @@ class TaskQueueTestCase:
         report_complete_timer = threading.Timer(
             interval=2.0,
             function=self.test_task_queue.report_complete,
-            args=(task,),
+            args=(
+                task,
+            ),
         )
         report_complete_timer.start()
 
@@ -247,7 +257,9 @@ class TaskQueueTestCase:
         purge_tasks_timer = threading.Timer(
             interval=2.0,
             function=self.test_task_queue.purge_tasks,
-            args=('test_task',),
+            args=(
+                'test_task',
+            ),
         )
         purge_tasks_timer.start()
 
@@ -268,7 +280,9 @@ class TaskQueueTestCase:
         )
         task_one = self.test_task_queue.craft_task(
             task_name='test_task',
-            args=(1,),
+            args=(
+                1,
+            ),
             kwargs={},
             report_completion=False,
         )
@@ -327,15 +341,27 @@ class TaskQueueTestCase:
         else:
             self.assertIn(
                 member=task_one,
-                container=[task_one_test, task_two_test, task_three_test],
+                container=[
+                    task_one_test,
+                    task_two_test,
+                    task_three_test,
+                ],
             )
             self.assertIn(
                 member=task_two,
-                container=[task_one_test, task_two_test, task_three_test],
+                container=[
+                    task_one_test,
+                    task_two_test,
+                    task_three_test,
+                ],
             )
             self.assertIn(
                 member=task_three,
-                container=[task_one_test, task_two_test, task_three_test],
+                container=[
+                    task_one_test,
+                    task_two_test,
+                    task_three_test,
+                ],
             )
 
         if self.order_matters:
@@ -354,7 +380,11 @@ class TaskQueueTestCase:
         else:
             tasks_to_wait = [
                 task_to_wait
-                for task_to_wait in [task_one_test, task_two_test, task_three_test]
+                for task_to_wait in [
+                    task_one_test,
+                    task_two_test,
+                    task_three_test,
+                ]
                 if task_to_wait['completion_key'] is not None
             ]
 
@@ -382,7 +412,9 @@ class TaskQueueTestCase:
         )
         task_one = self.test_task_queue.craft_task(
             task_name='test_task_one',
-            args=(1,),
+            args=(
+                1,
+            ),
             kwargs={},
             report_completion=False,
         )
@@ -437,11 +469,17 @@ class TaskQueueTestCase:
         else:
             self.assertIn(
                 member=task_one,
-                container=[task_one_test, task_two_test],
+                container=[
+                    task_one_test,
+                    task_two_test,
+                ],
             )
             self.assertIn(
                 member=task_two,
-                container=[task_one_test, task_two_test],
+                container=[
+                    task_one_test,
+                    task_two_test,
+                ],
             )
             self.assertEqual(
                 first=task_three,
@@ -464,7 +502,11 @@ class TaskQueueTestCase:
         else:
             tasks_to_wait = [
                 task_to_wait
-                for task_to_wait in [task_one_test, task_two_test, task_three_test]
+                for task_to_wait in [
+                    task_one_test,
+                    task_two_test,
+                    task_three_test,
+                ]
                 if task_to_wait['completion_key'] is not None
             ]
 
@@ -515,7 +557,9 @@ class TaskQueueTestCase:
         )
         task_NORMAL_priority = self.test_task_queue.craft_task(
             task_name='test_task',
-            args=(1,),
+            args=(
+                1,
+            ),
             kwargs={
                 'priority': 'NORMAL',
             },
@@ -608,7 +652,9 @@ class TaskQueueTestCase:
         )
         task_one = self.test_task_queue.craft_task(
             task_name='test_task_one',
-            args=(1,),
+            args=(
+                1,
+            ),
             kwargs={},
             report_completion=False,
         )
@@ -663,7 +709,9 @@ class TaskQueueTestCase:
         )
         task_one = self.test_task_queue.craft_task(
             task_name='test_task',
-            args=(1,),
+            args=(
+                1,
+            ),
             kwargs={},
             report_completion=False,
         )
@@ -697,7 +745,9 @@ class TaskQueueTestCase:
         )
         task_one = self.test_task_queue.craft_task(
             task_name='test_task',
-            args=(1,),
+            args=(
+                1,
+            ),
             kwargs={},
             report_completion=False,
         )

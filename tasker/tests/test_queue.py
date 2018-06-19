@@ -17,17 +17,32 @@ class QueueTestCase:
         cls.enqueued_value_first = {
             'str': 'string1',
             'date': datetime.datetime.utcnow().timestamp(),
-            'array': [1, 2, 3, 4],
+            'array': [
+                1,
+                2,
+                3,
+                4,
+            ],
         }
         cls.enqueued_value_second = {
             'str': 'string2',
             'date': datetime.datetime.utcnow().timestamp(),
-            'array': [2, 3, 4, 5],
+            'array': [
+                2,
+                3,
+                4,
+                5,
+            ],
         }
         cls.enqueued_value_third = {
             'str': 'string3',
             'date': datetime.datetime.utcnow().timestamp(),
-            'array': [3, 4, 5, 6],
+            'array': [
+                3,
+                4,
+                5,
+                6,
+            ],
         }
 
         cls.test_result_id = str(uuid.uuid4())

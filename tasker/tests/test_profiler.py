@@ -55,6 +55,7 @@ class ProfilerTestCase(
         for method_profile in profiling_statistics:
             if method_profile['method'] == 'http_request_func_to_profile':
                 http_request_func_profile = method_profile
+
                 break
 
         self.assertEqual(
@@ -75,6 +76,7 @@ class ProfilerTestCase(
         for method_profile in profiling_statistics:
             if 'sleep' in method_profile['method']:
                 sleep_func_profile = method_profile
+
                 break
 
         self.assertGreater(

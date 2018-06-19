@@ -4,7 +4,9 @@ import threading
 from .. import logger
 
 
-class Heartbeater(threading.Thread):
+class Heartbeater(
+    threading.Thread,
+):
     def __init__(
         self,
         monitor_client,
@@ -44,6 +46,8 @@ class Heartbeater(threading.Thread):
                 self.logger.error(
                     msg=exception,
                 )
+
+                time.sleep(1.0)
 
     def stop(
         self,

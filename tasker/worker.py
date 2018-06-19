@@ -108,8 +108,8 @@ class Worker:
             self.heartbeater.start()
         else:
             self.monitor_client = monitor.client.StatisticsDummyClient(
-                stats_server=self.config['monitoring']['stats_server'],
-                host_name=self.config['monitoring']['host_name'],
+                stats_server='',
+                host_name='',
                 worker_name=self.name,
             )
             self.heartbeater = devices.heartbeater.DummyHeartbeater()
