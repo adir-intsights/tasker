@@ -1,0 +1,8 @@
+[flake8]
+ignore = E501
+max-line-length = 120
+exclude =
+    .git,
+    __pycache__,
+    tasker/server/tasker_pb2_grpc.py,
+    tasker/server/tasker_pb2.py
