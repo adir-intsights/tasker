@@ -73,11 +73,6 @@ class Supervisor:
         self.should_work_event = threading.Event()
         self.should_work_event.set()
 
-        multiprocessing.set_start_method(
-            method='spawn',
-            force=True,
-        )
-
     def worker_watchdog(
         self,
         function,
